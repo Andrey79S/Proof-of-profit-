@@ -1,4 +1,4 @@
-
+# Off-chain Data Model
 
 PoP is designed as a modular protocol consisting of three layers:
 
