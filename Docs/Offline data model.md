@@ -1,3 +1,5 @@
+# Off-chain Data Model
+
 PoP introduces a standardized model for representing business economics.
 
 ## Core Categories
