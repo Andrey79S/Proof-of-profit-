@@ -1,11 +1,10 @@
-```mermaid
 graph LR
-    A[Daily Operations<br>(e.g., Pizza Sales)]
-    B[Economic Data Collection<br>(Raw Observations)]
-    C[Categorization<br>(Revenue, Ingredients,<br>Labor, Rent & Utilities,<br>Taxes)]
-    D[PoP Standardized Economic Report<br>(Rule-based Computed Metrics)]
-    E[Consistency & Attestation Checks<br>(Format, Logic, Provenance)]
-    F[On-chain Commitment<br>(Hash + Selective Disclosure<br>to Solana)]
+    A["Daily Operations<br/>(e.g. Pizza Sales)"]
+    B["Economic Data Collection<br/>(Raw Observations)"]
+    C["Categorization<br/>(Revenue, Ingredients, Labor, Rent and Utilities, Taxes)"]
+    D["PoP Standardized Economic Report<br/>(Rule-based Computed Metrics)"]
+    E["Consistency and Attestation Checks<br/>(Format, Logic, Provenance)"]
+    F["On-chain Commitment<br/>(Hash + Selective Disclosure to Solana)"]
 
     A --> B
     B --> C
