@@ -1,3 +1,4 @@
+```mermaid
 graph LR
     A[Daily Operations<br>(e.g., Pizza Sales)]
     B[Economic Data Collection<br>(Raw Observations)]
