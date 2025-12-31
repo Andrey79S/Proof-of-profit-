@@ -1,0 +1,10 @@
+{
+  "flour": {"price_per_kg": 1.5},
+  "water": {"price_per_kg": 0.1},
+  "yeast": {"price_per_kg": 35},
+  "salt": {"price_per_kg": 1},
+  "olive_oil": {"price_per_kg": 15},
+  "tomato_sauce": {"price_per_kg": 3},
+  "mozzarella": {"price_per_kg": 12},
+  "pepperoni": {"price_per_kg": 20}
+}
