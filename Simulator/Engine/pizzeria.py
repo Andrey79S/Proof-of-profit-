@@ -1,152 +1,58 @@
-# simulator/engine/pizzeria.py
-
-import json
-from datetime import datetime
-from collections import deque
 from engine.production import Production
-from engine.energy import EnergyTracker
-
-class Fridge:
-    def __init__(self, name, max_load, power_kw, spoil_hours=48):
-        self.name = name
-        self.max_load = max_load
-        self.power_kw = power_kw
-        self.current_load = 0.0
-        self.items = deque()  # (kg, timestamp)
-        self.spoil_hours = spoil_hours
-
-    def add(self, kg):
-        self.items.append((kg, datetime.now()))
-        self.current_load += kg
-
-    def remove(self, kg):
-        removed = 0.0
-        while kg > 0 and self.items:
-            batch, ts = self.items[0]
-            take = min(batch, kg)
-            batch -= take
-            kg -= take
-            removed += take
-            self.current_load -= take
-            if batch <= 0:
-                self.items.popleft()
-            else:
-                self.items[0] = (batch, ts)
-        return removed
-
-    def check_spoilage(self):
-        now = datetime.now()
-        spoiled = 0.0
-        new_items = deque()
-        for kg, ts in self.items:
-            if (now - ts).total_seconds() / 3600 > self.spoil_hours:
-                spoiled += kg
-                self.current_load -= kg
-            else:
-                new_items.append((kg, ts))
-        self.items = new_items
-        return spoiled
-
-class Table:
-    def __init__(self, max_load):
-        self.max_load = max_load
-        self.current_load = 0.0
-
-    def fill(self, kg):
-        space = self.max_load - self.current_load
-        to_add = min(space, kg)
-        self.current_load += to_add
-        return to_add
-
-    def empty(self):
-        temp = self.current_load
-        self.current_load = 0.0
-        return temp
-
-class Oven:
-    def __init__(self, power_kw, capacity=4):
-        self.power_kw = power_kw
-        self.capacity = capacity
-        self.on = False
-
-    def energy_per_minute(self):
-        return self.power_kw / 60 if self.on else 0
-
-class DoughMixer:
-    def __init__(self, min_load=15, max_load=35, power_kw=3, time_min=15, **kwargs):
-        self.min_load = min_load
-        self.max_load = max_load
-        self.power_kw = power_kw
-        self.time_min = time_min
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-
-    def mix(self, kg):
-        kg = max(self.min_load, min(kg, self.max_load))
-        return kg
-
-    def energy_per_mix(self):
-        return self.power_kw * (self.time_min / 60)
+from datetime import datetime
+import random
 
 class Pizzeria:
     def __init__(self, config_folder="config"):
-        # production
         self.production = Production(config_folder)
-        self.energy = EnergyTracker()
+        self.total_orders = 0
+        self.total_pizzas = {"margarita": 0, "pepperoni": 0}
 
-        # загрузка конфигурации оборудования
-        with open(f"{config_folder}/equipment.json", "r", encoding="utf-8") as f:
-            eq = json.load(f)
-
-        # инициализация оборудования
-        self.dough_mixer = DoughMixer(**eq.get("dough_mixer", {}))
-        self.oven = Oven(
-            power_kw=eq["oven"]["power_kw"],
-            capacity=eq["oven"].get("capacity", 4)
-        )
-        self.proofing_fridge = Fridge(
-            "proofing",
-            eq["proofing_fridge"]["max_load"],
-            eq["proofing_fridge"]["power_kw"],
-            spoil_hours=48
-        )
-        self.ingredients_fridge = Fridge(
-            "ingredients",
-            eq["ingredient_fridge"]["max_load"],
-            eq["ingredient_fridge"]["power_kw"],
-            spoil_hours=168
-        )
-        self.table = Table(eq["table"]["max_load"])
+        # для простоты: минимальные закупки
+        self.min_ingredients = {
+            "tomato_sauce": 2.0,
+            "mozzarella": 2.0,
+            "pepperoni": 1.0
+        }
 
     # =========================
-    # Методы работы сессии
+    # Сессия: старт дня
     # =========================
+    def start_day(self):
+        # замес теста 20 кг в день
+        self.production.mix_dough(20)
 
-    def fill_table_if_needed(self):
-        if self.table.current_load < self.table.max_load * 0.3:
-            moved = self.ingredients_fridge.remove(self.table.max_load - self.table.current_load)
-            self.table.fill(moved)
-            return moved
-        return 0.0
+        # закупка ингредиентов при низком уровне
+        purchases = {}
+        for ing, min_qty in self.min_ingredients.items():
+            if self.production.ingredients_stock[ing] < min_qty:
+                purchases[ing] = min_qty * 2
+        self.production.load_ingredients(purchases)
 
-    def load_dough_to_table(self):
-        moved = self.proofing_fridge.remove(min(10, self.proofing_fridge.current_load))
-        self.table.fill(moved)
-        return moved
+        # заполнение стола
+        self.production.fill_table_from_fridge()
 
-    def return_table_to_fridge(self):
-        kg = self.table.empty()
-        self.ingredients_fridge.add(kg)
-        return kg
+    # =========================
+    # Заказы
+    # =========================
+    def generate_orders(self, orders_per_day):
+        orders = []
+        for _ in range(orders_per_day):
+            pizza_type = random.choice(["pizza_margarita", "pizza_pepperoni"])
+            quantity = random.randint(1, 4)
+            orders.append({"pizza": pizza_type, "quantity": quantity})
+        return orders
 
-    def check_spoilage(self):
-        spoiled_dough = self.proofing_fridge.check_spoilage()
-        spoiled_ing = self.ingredients_fridge.check_spoilage()
-        return spoiled_dough + spoiled_ing
-
-    def calculate_energy_per_minute(self):
-        total = 0.0
-        total += self.oven.energy_per_minute()
-        total += self.proofing_fridge.power_kw / 60
-        total += self.ingredients_fridge.power_kw / 60
-        return total
+    def process_order(self, order):
+        produced = 0
+        for _ in range(order["quantity"]):
+            success = self.production.produce_pizza(order["pizza"])
+            if success:
+                produced += 1
+            else:
+                break
+        if produced > 0:
+            pizza_name = order["pizza"].replace("pizza_", "")
+            self.total_pizzas[pizza_name] += produced
+            self.total_orders += 1
+        return produced
