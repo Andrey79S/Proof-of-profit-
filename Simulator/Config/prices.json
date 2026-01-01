@@ -1,5 +1,3 @@
 {
-  "pizza_margarita": 10,
-  "pizza_pepperoni": 14,
-  "electricity_per_kwh": 0.25
+  "electricity_per_kwh": 0.1
 }
