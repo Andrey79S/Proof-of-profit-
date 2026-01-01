@@ -1,9 +1,15 @@
 from engine.pizzeria import Pizzeria
 
 pizzeria = Pizzeria()
-report = pizzeria.simulate_day(
+
+log = pizzeria.simulate_day(
     margarita_qty=40,
-    pepperoni_qty=30
+    pepperoni_qty=30,
+    ingredient_purchases={
+        "tomato_sauce": 10,
+        "mozzarella": 10,
+        "pepperoni": 5
+    }
 )
 
-print(report)
+print(log)
