@@ -1,78 +1,90 @@
+# simulator/run.py
+
+import random
 from engine.pizzeria import Pizzeria
 from engine.energy import EnergyTracker
-from datetime import datetime
-import random
 
-# =========================
-# Ввод пользователя
-# =========================
+# ==========================
+# Настройка симуляции
+# ==========================
 while True:
     try:
         days = int(input("Введите количество дней для симуляции (1-365): "))
         if 1 <= days <= 365:
             break
-        else:
-            print("Введите число от 1 до 365")
-    except ValueError:
-        print("Введите корректное число")
+    except:
+        pass
+    print("Введите число от 1 до 365.")
 
-# =========================
-# Создание пиццерии
-# =========================
+# Среднее количество заказов в час
+avg_orders_per_hour = 3  
+working_hours = 12  # по умолчанию рабочий день 12 часов
+
+# ==========================
+# Инициализация пиццерии
+# ==========================
 pizzeria = Pizzeria(config_folder="config")
-energy_tracker = EnergyTracker()
+energy_tracker = EnergyTracker(working_hours=working_hours)
 
-total_sales = {"margarita": 0, "pepperoni": 0}
-total_costs = 0.0
+# ==========================
+# Результаты симуляции
+# ==========================
+total_orders = 0
+produced_pizzas = {"margarita": 0, "pepperoni": 0}
+total_cost = 0.0
+total_energy_kwh = 0.0
+profit = 0.0
 
-# =========================
-# Симуляция
-# =========================
+# ==========================
+# Симуляция по дням
+# ==========================
 for day in range(1, days + 1):
     print(f"\n=== День {day} ===")
-
-    # 1️⃣ Проверка порчи продуктов
-    spoiled = pizzeria.check_spoilage()
-    if spoiled > 0:
-        print(f"Продукты испорчены: {spoiled:.2f} кг")
-
-    # 2️⃣ Заполнение стола ингредиентами
-    moved = pizzeria.fill_table_if_needed()
-    if moved > 0:
-        print(f"Заполнено со склада на стол: {moved:.2f} кг")
-
-    # 3️⃣ Замес теста при необходимости
-    dough_needed = 10  # пример потребности в кг для дня
+    
+    # Стартер: заполняем стол из холодильника
+    pizzeria.fill_table_if_needed()
+    
+    # Замес теста, если нужно
+    dough_needed = working_hours * avg_orders_per_hour * 0.2  # 200г теста на пиццу
     pizzeria.production.mix_dough_if_needed(dough_needed)
-
-    # 4️⃣ Генерация заказов (1 тап = 1 заказ, 1-4 пиццы)
-    orders = random.randint(5, 15)  # примерное количество тапов/заказов
-    for _ in range(orders):
-        qty_margarita = random.randint(0, 4)
-        qty_pepperoni = random.randint(0, 4 - qty_margarita)
-        report = pizzeria.production.produce_pizzas(qty_margarita, qty_pepperoni)
-
-        # если заказ выполнен
-        if sum(report["produced"].values()) > 0:
-            total_sales["margarita"] += report["produced"]["margarita"]
-            total_sales["pepperoni"] += report["produced"]["pepperoni"]
-            total_costs += report["ingredient_cost"]
-
-    # 5️⃣ Энергозатраты
-    daily_energy = pizzeria.calculate_energy_per_minute() * 60 * 12  # 12 часов работы
-    energy_tracker.add(daily_energy)
-    total_costs += daily_energy * 0.1  # цена за 1 kWh
-
-# =========================
-# Итоговая статистика
-# =========================
-total_pizzas = total_sales["margarita"] + total_sales["pepperoni"]
-profit = total_pizzas * 10 - total_costs  # 10$ за пиццу по умолчанию
+    
+    # Генерация заказов по часам
+    for hour in range(working_hours):
+        orders_this_hour = random.randint(max(1, avg_orders_per_hour-1), avg_orders_per_hour+1)
+        for _ in range(orders_this_hour):
+            total_orders += 1
+            pizza_type = random.choice(["margarita", "pepperoni"])
+            qty = random.randint(1, 4)
+            
+            report = pizzeria.production.produce_pizzas(
+                margarita_qty=qty if pizza_type=="margarita" else 0,
+                pepperoni_qty=qty if pizza_type=="pepperoni" else 0
+            )
+            
+            # Обновляем статистику
+            produced_pizzas["margarita"] += report["produced"]["margarita"]
+            produced_pizzas["pepperoni"] += report["produced"]["pepperoni"]
+            total_cost += report["ingredient_cost"]
+    
+    # Энергозатраты за день
+    dough_used_kg = sum(batch["kg"] for batch in pizzeria.production.dough_batches)
+    energy_kwh = energy_tracker.total_energy + pizzeria.calculate_energy_per_minute() * 60 * working_hours
+    total_energy_kwh += energy_kwh
+    
+    # Списание просрочки
+    spoiled = pizzeria.check_spoilage()
+    
+# ==========================
+# Финальный отчет
+# ==========================
+revenue = produced_pizzas["margarita"]*8 + produced_pizzas["pepperoni"]*10  # Пример цены за пиццу
+profit = revenue - total_cost
 
 print("\n=== Симуляция завершена ===")
-print(f"Всего пицц: {total_pizzas}")
-print(f"  Маргарита: {total_sales['margarita']}")
-print(f"  Пепперони: {total_sales['pepperoni']}")
-print(f"Общие затраты: {total_costs:.2f}$")
-print(f"Энергозатраты: {energy_tracker.total_energy:.2f} kWh")
+print(f"Всего заказов: {total_orders}")
+print(f"Всего пицц: {produced_pizzas['margarita'] + produced_pizzas['pepperoni']}")
+print(f" - Маргарита: {produced_pizzas['margarita']}")
+print(f" - Пепперони: {produced_pizzas['pepperoni']}")
+print(f"Общие затраты на ингредиенты: {total_cost:.2f}$")
+print(f"Энергозатраты: {total_energy_kwh:.2f} kWh")
 print(f"Прибыль: {profit:.2f}$")
