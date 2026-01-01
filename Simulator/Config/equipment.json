@@ -1,9 +1,12 @@
 {
   "dough_mixer": {
-    "capacity_kg": 35,
+    "min_load": 15,
+    "max_load": 35,
     "power_kw": 3,
     "time_min": 15,
-    "price": 3000
+    "price": 3000,
+    "capacity_kg": 35
+
   },
   "dough_fridge": {
     "capacity_kg": 20,
