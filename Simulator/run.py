@@ -1,10 +1,10 @@
-# simulator/run.py
-
 from engine.pizzeria import Pizzeria
-from work_session import WorkSession
+from engine.energy import EnergyTracker
+from datetime import datetime
+import random
 
 # =========================
-# Ввод количества дней
+# Ввод пользователя
 # =========================
 while True:
     try:
@@ -14,62 +14,65 @@ while True:
         else:
             print("Введите число от 1 до 365")
     except ValueError:
-        print("Пожалуйста, введите целое число")
+        print("Введите корректное число")
 
 # =========================
-# ИНИЦИАЛИЗАЦИЯ ПИЦЦЕРИИ
+# Создание пиццерии
 # =========================
 pizzeria = Pizzeria(config_folder="config")
+energy_tracker = EnergyTracker()
 
-# Каждый день = 12 часов = 720 минут
-total_minutes = days * 12 * 60
-session = WorkSession(pizzeria, working_minutes=total_minutes)
-
-# =========================
-# Добавим тестовые заказы для симуляции
-# =========================
-recipes = pizzeria.production.recipes
-
-# Для примера: на каждый день по 5-10 случайных заказов
-import random
-
-for _ in range(days * 5):
-    pizza_type = random.choice(["pizza_margarita", "pizza_pepperoni"])
-    recipe = recipes[pizza_type]
-    pizzas_count = random.randint(1, 4)
-    cook_time = 6  # минут на пиццу
-    expected_time = 10 + pizzas_count * 5  # минимальное время ожидания
-    price = 0
-    if pizza_type == "pizza_margarita":
-        price = 12 * pizzas_count
-    else:
-        price = 20 * pizzas_count
-
-    session.add_order(
-        pizzas_count=pizzas_count,
-        recipe=recipe,
-        cook_time=cook_time,
-        expected_time=expected_time,
-        price=price
-    )
+total_sales = {"margarita": 0, "pepperoni": 0}
+total_costs = 0.0
 
 # =========================
-# ЗАПУСК СИМУЛЯЦИИ
+# Симуляция
 # =========================
-print(f"\nСимуляция на {days} дней ({total_minutes} минут) запущена...\n")
-while session.state == session.state.ACTIVE:
-    session.tick()
+for day in range(1, days + 1):
+    print(f"\n=== День {day} ===")
+
+    # 1️⃣ Проверка порчи продуктов
+    spoiled = pizzeria.check_spoilage()
+    if spoiled > 0:
+        print(f"Продукты испорчены: {spoiled:.2f} кг")
+
+    # 2️⃣ Заполнение стола ингредиентами
+    moved = pizzeria.fill_table_if_needed()
+    if moved > 0:
+        print(f"Заполнено со склада на стол: {moved:.2f} кг")
+
+    # 3️⃣ Замес теста при необходимости
+    dough_needed = 10  # пример потребности в кг для дня
+    pizzeria.production.mix_dough_if_needed(dough_needed)
+
+    # 4️⃣ Генерация заказов (1 тап = 1 заказ, 1-4 пиццы)
+    orders = random.randint(5, 15)  # примерное количество тапов/заказов
+    for _ in range(orders):
+        qty_margarita = random.randint(0, 4)
+        qty_pepperoni = random.randint(0, 4 - qty_margarita)
+        report = pizzeria.production.produce_pizzas(qty_margarita, qty_pepperoni)
+
+        # если заказ выполнен
+        if sum(report["produced"].values()) > 0:
+            total_sales["margarita"] += report["produced"]["margarita"]
+            total_sales["pepperoni"] += report["produced"]["pepperoni"]
+            total_costs += report["ingredient_cost"]
+
+    # 5️⃣ Энергозатраты
+    daily_energy = pizzeria.calculate_energy_per_minute() * 60 * 12  # 12 часов работы
+    energy_tracker.add(daily_energy)
+    total_costs += daily_energy * 0.1  # цена за 1 kWh
 
 # =========================
-# ВЫВОД ОТЧЁТА
+# Итоговая статистика
 # =========================
-report = session.report
-print("=== Отчёт по симуляции ===")
-print(f"Всего заказов: {report['orders_total']}")
-print(f"Выполнено: {report['orders_done']}")
-print(f"Потеряно: {report['orders_lost']}")
-print(f"Выручка: ${report['revenue']:.2f}")
-print(f"Расход ингредиентов: ${report['ingredients_cost']:.2f}")
-print(f"Энергия: {report['energy_kwh']:.2f} kWh")
-profit = report['revenue'] - report['ingredients_cost']
-print(f"Прибыль: ${profit:.2f}")
+total_pizzas = total_sales["margarita"] + total_sales["pepperoni"]
+profit = total_pizzas * 10 - total_costs  # 10$ за пиццу по умолчанию
+
+print("\n=== Симуляция завершена ===")
+print(f"Всего пицц: {total_pizzas}")
+print(f"  Маргарита: {total_sales['margarita']}")
+print(f"  Пепперони: {total_sales['pepperoni']}")
+print(f"Общие затраты: {total_costs:.2f}$")
+print(f"Энергозатраты: {energy_tracker.total_energy:.2f} kWh")
+print(f"Прибыль: {profit:.2f}$")
