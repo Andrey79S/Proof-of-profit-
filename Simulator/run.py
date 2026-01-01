@@ -1,15 +1,13 @@
+# simulator/run.py
+
 from engine.pizzeria import Pizzeria
+from work_session import WorkSession
 
-pizzeria = Pizzeria()
+if __name__ == "__main__":
+    pizzeria = Pizzeria()
+    session = WorkSession(pizzeria, duration_minutes=720)  # 12 часов
+    report = session.run()
 
-log = pizzeria.simulate_day(
-    margarita_qty=40,
-    pepperoni_qty=30,
-    ingredient_purchases={
-        "tomato_sauce": 10,
-        "mozzarella": 10,
-        "pepperoni": 5
-    }
-)
-
-print(log)
+    print("📊 Session report:")
+    for k,v in report.items():
+        print(f"{k}: {v}")
