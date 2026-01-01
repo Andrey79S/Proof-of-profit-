@@ -1,64 +1,75 @@
 # simulator/run.py
 
-import argparse
 from engine.pizzeria import Pizzeria
 from work_session import WorkSession
 
 # =========================
-# ПАРСИНГ АРГУМЕНТОВ
+# Ввод количества дней
 # =========================
-parser = argparse.ArgumentParser(description="Simulate a day at the pizzeria.")
-parser.add_argument(
-    "--minutes",
-    type=int,
-    default=720,  # 12 часов * 60 минут
-    help="Количество минут симуляции (по умолчанию 720 = 12 часов)"
-)
-args = parser.parse_args()
+while True:
+    try:
+        days = int(input("Введите количество дней для симуляции (1-365): "))
+        if 1 <= days <= 365:
+            break
+        else:
+            print("Введите число от 1 до 365")
+    except ValueError:
+        print("Пожалуйста, введите целое число")
 
 # =========================
-# ИНИЦИАЛИЗАЦИЯ
+# ИНИЦИАЛИЗАЦИЯ ПИЦЦЕРИИ
 # =========================
 pizzeria = Pizzeria(config_folder="config")
-session = WorkSession(pizzeria, working_minutes=args.minutes)
-session.start()
+
+# Каждый день = 12 часов = 720 минут
+total_minutes = days * 12 * 60
+session = WorkSession(pizzeria, working_minutes=total_minutes)
 
 # =========================
-# ДОБАВЛЕНИЕ ТЕСТОВЫХ ЗАКАЗОВ
+# Добавим тестовые заказы для симуляции
 # =========================
-# Для проверки: можно добавить вручную несколько заказов
-# Например, 1-2 пиццы маргарита, 1 пицца пепперони
 recipes = pizzeria.production.recipes
-session.add_order(
-    pizzas_count=2,
-    recipe=recipes["pizza_margarita"],
-    cook_time=6,
-    expected_time=15,
-    price=12.0*2
-)
-session.add_order(
-    pizzas_count=1,
-    recipe=recipes["pizza_pepperoni"],
-    cook_time=6,
-    expected_time=15,
-    price=20.0
-)
+
+# Для примера: на каждый день по 5-10 случайных заказов
+import random
+
+for _ in range(days * 5):
+    pizza_type = random.choice(["pizza_margarita", "pizza_pepperoni"])
+    recipe = recipes[pizza_type]
+    pizzas_count = random.randint(1, 4)
+    cook_time = 6  # минут на пиццу
+    expected_time = 10 + pizzas_count * 5  # минимальное время ожидания
+    price = 0
+    if pizza_type == "pizza_margarita":
+        price = 12 * pizzas_count
+    else:
+        price = 20 * pizzas_count
+
+    session.add_order(
+        pizzas_count=pizzas_count,
+        recipe=recipe,
+        cook_time=cook_time,
+        expected_time=expected_time,
+        price=price
+    )
 
 # =========================
-# ОСНОВНОЙ ЦИКЛ
+# ЗАПУСК СИМУЛЯЦИИ
 # =========================
-print("Симуляция запущена...")
+print(f"\nСимуляция на {days} дней ({total_minutes} минут) запущена...\n")
 while session.state == session.state.ACTIVE:
     session.tick()
 
 # =========================
-# ОТЧЁТ
+# ВЫВОД ОТЧЁТА
 # =========================
 report = session.report
-print("=== Отчёт за день ===")
+print("=== Отчёт по симуляции ===")
 print(f"Всего заказов: {report['orders_total']}")
 print(f"Выполнено: {report['orders_done']}")
 print(f"Потеряно: {report['orders_lost']}")
 print(f"Выручка: ${report['revenue']:.2f}")
 print(f"Расход ингредиентов: ${report['ingredients_cost']:.2f}")
 print(f"Энергия: {report['energy_kwh']:.2f} kWh")
+profit = report['revenue'] - report['ingredients_cost']
+print(f"Прибыль: ${profit:.2f}")
