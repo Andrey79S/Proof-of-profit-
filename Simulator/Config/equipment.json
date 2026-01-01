@@ -1,6 +1,6 @@
 {
   "dough_mixer": {
-    "capacity_kg": 15-35,
+    "capacity_kg": 35,
     "power_kw": 3,
     "time_min": 15,
     "price": 3000
