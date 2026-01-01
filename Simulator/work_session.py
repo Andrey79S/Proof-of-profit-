@@ -1,125 +1,226 @@
 # simulator/work_session.py
 
-import random
+from enum import Enum, auto
+from engine.order import Order, OrderStatus
+from engine.order_queue import OrderQueue
+
+
+# =========================
+# СОСТОЯНИЯ СЕССИИ
+# =========================
+
+class SessionState(Enum):
+    IDLE = auto()
+    STARTING = auto()
+    ACTIVE = auto()
+    STOPPING = auto()
+    CLOSED = auto()
+
+
+# =========================
+# WORK SESSION
+# =========================
 
 class WorkSession:
-    """
-    Симуляция рабочего дня пиццерии с заказами (тапами).
-    """
-
-    def __init__(self, pizzeria, taps: int = 10, duration_minutes: int = 720):
-        """
-        :param pizzeria: объект Pizzeria
-        :param taps: количество тапов (заказов)
-        :param duration_minutes: длительность сессии в минутах
-        """
+    def __init__(self, pizzeria, working_minutes=12 * 60):
         self.pizzeria = pizzeria
-        self.duration = duration_minutes
-        self.taps = taps
-        self.orders_queue = self.generate_orders()
+        self.state = SessionState.IDLE
 
-    def generate_orders(self):
-        """
-        Генерация случайной очереди заказов.
-        Каждый заказ содержит 1–4 пиццы.
-        """
-        orders = []
-        pizza_types = ["margarita", "pepperoni"]
-        for _ in range(self.taps):
-            count = random.randint(1, 4)
-            pizzas = [random.choice(pizza_types) for _ in range(count)]
-            orders.append({
-                "pizzas": pizzas,
-                "remaining_time": self.calc_prep_time(count)
-            })
-        return orders
+        self.current_minute = 0
+        self.working_minutes = working_minutes
 
-    @staticmethod
-    def calc_prep_time(count):
-        """Время приготовления заказа по количеству пицц (в минутах)"""
-        if count == 1:
-            return 15
-        elif count == 2:
-            return 25
-        elif count == 3:
-            return 35
-        else:
-            return 40
+        self.orders = OrderQueue()
 
-    def run(self):
-        """
-        Запуск сессии.
-        Обрабатывает заказы, замес теста, порчу продуктов, энергию.
-        """
-        report = {
+        self.energy = pizzeria.energy
+
+        self.report = {
+            "orders_total": 0,
+            "orders_done": 0,
+            "orders_lost": 0,
+            "revenue": 0.0,
+            "ingredients_cost": 0.0,
             "energy_kwh": 0.0,
-            "dough_moved_to_table_kg": 0.0,
-            "table_returned_to_fridge_kg": 0.0,
-            "spoiled_kg": 0.0,
-            "completed_orders": 0,
-            "failed_orders": 0
         }
 
-        for minute in range(1, self.duration + 1):
-            # 1️⃣ Энергия оборудования за минуту
-            self.pizzeria.energy.add(self.pizzeria.calculate_energy_per_minute())
+    # =========================
+    # УПРАВЛЕНИЕ СЕССИЕЙ
+    # =========================
 
-            # 2️⃣ Наполнение стола из холодильника при необходимости (менее 30%)
-            moved = self.pizzeria.fill_table_if_needed()
-            report["dough_moved_to_table_kg"] += moved
+    def start(self):
+        if self.state != SessionState.IDLE:
+            return
 
-            # 3️⃣ Замес теста если меньше минимума
-            if self.pizzeria.proofing_fridge.current_load < self.pizzeria.dough_mixer.min_load:
-                kg_to_mix = self.pizzeria.dough_mixer.mix(20)
-                self.pizzeria.proofing_fridge.add(kg_to_mix)
+        self.state = SessionState.STARTING
+        self._init_session()
+        self.state = SessionState.ACTIVE
 
-            # 4️⃣ Проверка порчи продуктов каждый час
-            if minute % 60 == 0:
-                spoiled = self.pizzeria.check_spoilage()
-                report["spoiled_kg"] += spoiled
+    def stop(self):
+        if self.state != SessionState.ACTIVE:
+            return
 
-            # 5️⃣ Обработка текущего заказа
-            if self.orders_queue:
-                order = self.orders_queue[0]
-                can_make = True
-                # Проверка теста и ингредиентов
-                for pizza in order["pizzas"]:
-                    recipe = self.pizzeria.production.recipes[f"pizza_{pizza}"]
-                    if self.pizzeria.proofing_fridge.current_load < recipe["dough"]:
-                        can_make = False
-                        break
-                    for ing, kg in recipe.items():
-                        if ing != "dough" and self.pizzeria.table_stock[ing] < kg:
-                            can_make = False
-                            break
+        self.state = SessionState.STOPPING
+        self._close_session()
+        self.state = SessionState.CLOSED
 
-                if can_make:
-                    # Списываем тесто и ингредиенты
-                    for pizza in order["pizzas"]:
-                        recipe = self.pizzeria.production.recipes[f"pizza_{pizza}"]
-                        # Тесто
-                        self.pizzeria.proofing_fridge.remove(recipe["dough"])
-                        # Ингредиенты со стола + потери
-                        for ing, kg in recipe.items():
-                            if ing == "dough":
-                                continue
-                            loss = kg * self.pizzeria.production.ingredients_loss_pct
-                            self.pizzeria.table_stock[ing] -= (kg + loss)
+    # =========================
+    # ИНИЦИАЛИЗАЦИЯ
+    # =========================
 
-                    # Заказ готов
-                    order["remaining_time"] -= 1
-                    if order["remaining_time"] <= 0:
-                        report["completed_orders"] += 1
-                        self.orders_queue.pop(0)
-                else:
-                    # Заказ пропадает, если нет ресурсов
-                    report["failed_orders"] += 1
-                    self.orders_queue.pop(0)
+    def _init_session(self):
+        # включаем печь
+        self.pizzeria.oven.on = True
 
-        # 6️⃣ Итоговая энергия
-        report["energy_kwh"] = self.pizzeria.energy.report()
+        # наполняем стол
+        self.pizzeria.fill_table_if_needed()
 
-        # 7️⃣ Возврат остатков со стола в холодильник
-        report["table_returned_to_fridge_kg"] = self.pizzeria.return_table_to_fridge()
+        # проверка теста → замес при необходимости
+        self._ensure_dough_available()
 
-        return report
+    # =========================
+    # ЗАКРЫТИЕ
+    # =========================
+
+    def _close_session(self):
+        # выключаем печь
+        self.pizzeria.oven.on = False
+
+        # остатки со стола → в холодильник
+        self.pizzeria.return_table_to_fridge()
+
+        # финальный отчёт
+        self.report["orders_done"] = len(self.orders.done)
+        self.report["orders_lost"] = len(self.orders.lost)
+        self.report["energy_kwh"] = round(self.energy.report(), 3)
+
+    # =========================
+    # ДОБАВЛЕНИЕ ЗАКАЗА (ТАП)
+    # =========================
+
+    def add_order(self, pizzas_count, recipe, cook_time, expected_time, price):
+        if self.state != SessionState.ACTIVE:
+            return
+
+        order = Order(
+            pizzas_count=pizzas_count,
+            created_minute=self.current_minute,
+            expected_time=expected_time,
+            recipe=recipe,
+            cook_time=cook_time
+        )
+
+        order.price = price
+        self.orders.add_order(order)
+        self.report["orders_total"] += 1
+
+    # =========================
+    # ОСНОВНОЙ TICK (1 МИНУТА)
+    # =========================
+
+    def tick(self):
+        if self.state != SessionState.ACTIVE:
+            return
+
+        # 1️⃣ энергия за минуту
+        self.energy.add(self.pizzeria.calculate_energy_per_minute())
+
+        # 2️⃣ порча
+        self.pizzeria.check_spoilage()
+
+        # 3️⃣ обработка очереди заказов
+        self._process_orders()
+
+        # 4️⃣ тик готовки
+        self.orders.tick(self.current_minute)
+
+        # 5️⃣ замес теста при необходимости
+        self._ensure_dough_available()
+
+        # 6️⃣ время
+        self.current_minute += 1
+
+        if self.current_minute >= self.working_minutes:
+            self.stop()
+
+    # =========================
+    # ОБРАБОТКА ЗАКАЗОВ
+    # =========================
+
+    def _process_orders(self):
+        if not self.orders.pending:
+            return
+
+        order = self.orders.pending[0]
+
+        # проверка ингредиентов
+        if not self._has_ingredients(order):
+            order.status = OrderStatus.LOST
+            self.orders.lost.append(order)
+            self.orders.pending.popleft()
+            return
+
+        # проверка времени
+        queue_time = self.orders.queue_cook_time()
+        started = self.orders.try_start_order(
+            order,
+            self.current_minute,
+            queue_time
+        )
+
+        self.orders.pending.popleft()
+
+        if not started:
+            return
+
+        # списываем ингредиенты
+        self._consume_ingredients(order)
+
+        # доход
+        self.report["revenue"] += order.price
+
+    # =========================
+    # ИНГРЕДИЕНТЫ
+    # =========================
+
+    def _has_ingredients(self, order: Order) -> bool:
+        needed = order.total_ingredients()
+        dough_needed = order.total_dough()
+
+        if self.pizzeria.proofing_fridge.current_load < dough_needed:
+            return False
+
+        for ing, kg in needed.items():
+            if self.pizzeria.table.current_load < kg:
+                self.pizzeria.fill_table_if_needed()
+                if self.pizzeria.table.current_load < kg:
+                    return False
+
+        return True
+
+    def _consume_ingredients(self, order: Order):
+        # тесто
+        self.pizzeria.proofing_fridge.remove(order.total_dough())
+
+        # ингредиенты
+        for ing, kg in order.total_ingredients().items():
+            self.pizzeria.table.current_load -= kg
+            self.report["ingredients_cost"] += kg  # цена считается отдельно
+
+    # =========================
+    # ТЕСТО
+    # =========================
+
+    def _ensure_dough_available(self):
+        fridge = self.pizzeria.proofing_fridge
+        mixer = self.pizzeria.dough_mixer
+
+        if fridge.current_load >= fridge.max_load * 0.3:
+            return
+
+        space = fridge.max_load - fridge.current_load
+        if space < mixer.min_load:
+            return
+
+        mixed = mixer.mix(space)
+        fridge.add(mixed)
+
+        self.energy.add(mixer.energy_per_mix())
