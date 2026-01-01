@@ -3,30 +3,22 @@
     "min_load": 15,
     "max_load": 35,
     "power_kw": 3,
-    "time_min": 15,
-    "price": 3000,
-    "capacity_kg": 35
-
-  },
-  "dough_fridge": {
-    "capacity_kg": 20,
-    "power_kw": 0.32,
-    "price": 2500
-  },
-  "ingredients_fridge": {
-    "capacity_kg": 20,
-    "power_kw": 0.2,
-    "price": 2000
+    "time_min": 15
   },
   "oven": {
-    "capacity_pizza": 4,
-    "time_min_per_pizza": 6,
     "power_kw": 8,
-    "price": 5000
+    "capacity": 4
   },
-  "prep_table": {
-    "capacity_kg": 5,
-    "power_kw": 0.25,
-    "price": 2500
+  "proofing_fridge": {
+    "max_load": 20,
+    "power_kw": 0.32
+  },
+  "ingredient_fridge": {
+    "max_load": 20,
+    "power_kw": 0.2
+  },
+  "table": {
+    "max_load": 5,
+    "power_kw": 0.25
   }
 }
