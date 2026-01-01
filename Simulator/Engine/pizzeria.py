@@ -83,12 +83,12 @@ class Oven:
 
 
 class DoughMixer:
-    def __init__(self, min_load, max_load, power_kw, time_min):
+    def __init__(self, min_load, max_load, power_kw, time_min, capacity_kg=None):
         self.min_load = min_load
         self.max_load = max_load
         self.power_kw = power_kw
         self.time_min = time_min
-        self.capacity_kg = capacity_kg
+        self.capacity_kg = capacity_kg  # теперь не будет ошибки
     def mix(self, kg):
         kg = max(self.min_load, min(kg, self.max_load))
         return kg
