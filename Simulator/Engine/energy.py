@@ -38,5 +38,17 @@ class Energy:
             self.prep_table_energy() +
             self.mixer_energy(dough_kg)
         )
+class EnergyTracker:
+    def __init__(self):
+        self.total_energy = 0.0
 
+    def add(self, kwh):
+        self.total_energy += kwh
+
+    def reset(self):
+        self.total_energy = 0.0
+
+    def report(self):
+        return self.total_energy
+        
         return total_kwh * self.prices["electricity_per_kwh"]
