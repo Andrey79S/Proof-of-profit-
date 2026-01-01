@@ -1,19 +1,15 @@
-# simulator/engine/pizzeria.py
-
 import json
-from collections import deque
 from datetime import datetime
-from engine.production import Production
-
+from collections import deque
 
 class Fridge:
-    def __init__(self, name, max_load, power_kw, spoil_hours):
+    def __init__(self, name, max_load, power_kw, spoil_hours=48):
         self.name = name
         self.max_load = max_load
         self.power_kw = power_kw
-        self.spoil_hours = spoil_hours
-        self.current_load = 0
+        self.current_load = 0.0
         self.items = deque()  # (kg, timestamp)
+        self.spoil_hours = spoil_hours
 
     def add(self, kg):
         self.items.append((kg, datetime.now()))
@@ -39,8 +35,7 @@ class Fridge:
         spoiled = 0
         new_items = deque()
         for kg, ts in self.items:
-            hours = (now - ts).total_seconds() / 3600
-            if hours > self.spoil_hours:
+            if (now - ts).total_seconds() / 3600 > self.spoil_hours:
                 spoiled += kg
                 self.current_load -= kg
             else:
@@ -53,23 +48,17 @@ class Table:
     def __init__(self, max_load):
         self.max_load = max_load
         self.current_load = 0.0
-        self.stock = {}  # {ingredient: kg}
 
-    def fill(self, ing_name, kg):
-        if ing_name not in self.stock:
-            self.stock[ing_name] = 0
+    def fill(self, kg):
         space = self.max_load - self.current_load
         to_add = min(space, kg)
-        self.stock[ing_name] += to_add
         self.current_load += to_add
         return to_add
 
-    def remove(self, ing_name, kg):
-        available = self.stock.get(ing_name, 0)
-        take = min(available, kg)
-        self.stock[ing_name] -= take
-        self.current_load -= take
-        return take
+    def empty(self):
+        temp = self.current_load
+        self.current_load = 0.0
+        return temp
 
 
 class Oven:
@@ -82,16 +71,18 @@ class Oven:
         return self.power_kw / 60 if self.on else 0
 
 
- class DoughMixer:
+class DoughMixer:
     def __init__(self, min_load, max_load, power_kw, time_min, **kwargs):
         self.min_load = min_load
         self.max_load = max_load
         self.power_kw = power_kw
         self.time_min = time_min
-        # сохраняем все остальные параметры на будущее
+        # сохраняем все дополнительные поля из JSON, чтобы не было ошибок
         for k, v in kwargs.items():
-            setattr(self, k, v) # теперь не будет ошибки
+            setattr(self, k, v)
+
     def mix(self, kg):
+        # ограничиваем по min/max
         kg = max(self.min_load, min(kg, self.max_load))
         return kg
 
@@ -99,41 +90,60 @@ class Oven:
         return self.power_kw * (self.time_min / 60)
 
 
+# =========================
+# Pizzeria
+# =========================
 class Pizzeria:
     def __init__(self, config_folder="config"):
-        # Production
-        self.production = Production(config_folder)
+        from engine.production import Production
+        from engine.energy import EnergyTracker
 
-        # Чтение оборудования
-        with open(f"{config_folder}/equipment.json", encoding="utf-8") as f:
+        self.production = Production(config_folder)
+        self.energy = EnergyTracker()
+
+        # Загружаем конфиг оборудования
+        with open(f"{config_folder}/equipment.json", "r", encoding="utf-8") as f:
             eq = json.load(f)
 
+        # оборудование
         self.dough_mixer = DoughMixer(**eq["dough_mixer"])
         self.oven = Oven(eq["oven"]["power_kw"], eq["oven"]["capacity"])
-        self.proofing_fridge = Fridge("proofing", eq["proofing_fridge"]["max_load"], eq["proofing_fridge"]["power_kw"], spoil_hours=48)
-        self.ingredients_fridge = Fridge("ingredients", eq["ingredient_fridge"]["max_load"], eq["ingredient_fridge"]["power_kw"], spoil_hours=168)
+        self.proofing_fridge = Fridge(
+            "proofing", eq["proofing_fridge"]["max_load"], eq["proofing_fridge"]["power_kw"], spoil_hours=48
+        )
+        self.ingredients_fridge = Fridge(
+            "ingredients", eq["ingredient_fridge"]["max_load"], eq["ingredient_fridge"]["power_kw"], spoil_hours=168
+        )
         self.table = Table(eq["table"]["max_load"])
 
     # =========================
     # Методы для WorkSession
     # =========================
     def fill_table_if_needed(self):
-        for ing_name in self.production.ingredients_data.keys():
-            needed = self.table.max_load - self.table.current_load
-            moved = self.ingredients_fridge.remove(needed)
-            self.table.fill(ing_name, moved)
+        if self.table.current_load < self.table.max_load * 0.3:
+            moved = self.ingredients_fridge.remove(self.table.max_load - self.table.current_load)
+            self.table.fill(moved)
+            return moved
+        return 0
+
+    def load_dough_to_table(self):
+        moved = self.proofing_fridge.remove(min(10, self.proofing_fridge.current_load))
+        self.table.fill(moved)
+        return moved
 
     def return_table_to_fridge(self):
-        for ing_name, kg in self.table.stock.items():
-            self.ingredients_fridge.add(kg)
-        self.table.stock.clear()
-        self.table.current_load = 0
+        kg = self.table.empty()
+        self.ingredients_fridge.add(kg)
+        return kg
 
     def check_spoilage(self):
-        return self.proofing_fridge.check_spoilage() + self.ingredients_fridge.check_spoilage()
+        spoiled_dough = self.proofing_fridge.check_spoilage()
+        spoiled_ing = self.ingredients_fridge.check_spoilage()
+        return spoiled_dough + spoiled_ing
 
     def calculate_energy_per_minute(self):
-        total = self.oven.energy_per_minute()
+        total = 0
+        total += self.oven.energy_per_minute()
         total += self.proofing_fridge.power_kw / 60
         total += self.ingredients_fridge.power_kw / 60
         return total
