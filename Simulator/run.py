@@ -1,45 +1,64 @@
 # simulator/run.py
 
+import argparse
 from engine.pizzeria import Pizzeria
 from work_session import WorkSession
 
-def main():
-    print("🎯 Добро пожаловать в симулятор пиццерии PoP!")
+# =========================
+# ПАРСИНГ АРГУМЕНТОВ
+# =========================
+parser = argparse.ArgumentParser(description="Simulate a day at the pizzeria.")
+parser.add_argument(
+    "--minutes",
+    type=int,
+    default=720,  # 12 часов * 60 минут
+    help="Количество минут симуляции (по умолчанию 720 = 12 часов)"
+)
+args = parser.parse_args()
 
-    # 1️⃣ Ввод параметров сессии
-    try:
-        taps = int(input("Введите количество тапов (заказов) на сессию: "))
-        if taps < 1:
-            raise ValueError
-    except ValueError:
-        print("Некорректное значение. Используем 10 тапов по умолчанию.")
-        taps = 10
+# =========================
+# ИНИЦИАЛИЗАЦИЯ
+# =========================
+pizzeria = Pizzeria(config_folder="config")
+session = WorkSession(pizzeria, working_minutes=args.minutes)
+session.start()
 
-    try:
-        duration_hours = int(input("Введите длительность сессии (часы, 1–24): "))
-        if duration_hours < 1 or duration_hours > 24:
-            raise ValueError
-    except ValueError:
-        print("Некорректное значение. Используем 12 часов по умолчанию.")
-        duration_hours = 12
+# =========================
+# ДОБАВЛЕНИЕ ТЕСТОВЫХ ЗАКАЗОВ
+# =========================
+# Для проверки: можно добавить вручную несколько заказов
+# Например, 1-2 пиццы маргарита, 1 пицца пепперони
+recipes = pizzeria.production.recipes
+session.add_order(
+    pizzas_count=2,
+    recipe=recipes["pizza_margarita"],
+    cook_time=6,
+    expected_time=15,
+    price=12.0*2
+)
+session.add_order(
+    pizzas_count=1,
+    recipe=recipes["pizza_pepperoni"],
+    cook_time=6,
+    expected_time=15,
+    price=20.0
+)
 
-    duration_minutes = duration_hours * 60
+# =========================
+# ОСНОВНОЙ ЦИКЛ
+# =========================
+print("Симуляция запущена...")
+while session.state == session.state.ACTIVE:
+    session.tick()
 
-    # 2️⃣ Создаём пиццерию
-    pizzeria = Pizzeria()
-
-    # 3️⃣ Создаём и запускаем рабочую сессию
-    session = WorkSession(pizzeria, taps=taps, duration_minutes=duration_minutes)
-    report = session.run()
-
-    # 4️⃣ Выводим итоговый отчёт
-    print("\n📊 Итоговый отчёт по сессии:")
-    print(f"Энергия потреблена (кВт·ч): {report['energy_kwh']:.2f}")
-    print(f"Тесто перемещено на стол (кг): {report['dough_moved_to_table_kg']:.2f}")
-    print(f"Остатки возвращены в холодильник (кг): {report['table_returned_to_fridge_kg']:.2f}")
-    print(f"Порча продуктов (кг): {report['spoiled_kg']:.2f}")
-    print(f"Выполненные заказы: {report['completed_orders']}")
-    print(f"Пропущенные заказы: {report['failed_orders']}")
-
-if __name__ == "__main__":
-    main()
+# =========================
+# ОТЧЁТ
+# =========================
+report = session.report
+print("=== Отчёт за день ===")
+print(f"Всего заказов: {report['orders_total']}")
+print(f"Выполнено: {report['orders_done']}")
+print(f"Потеряно: {report['orders_lost']}")
+print(f"Выручка: ${report['revenue']:.2f}")
+print(f"Расход ингредиентов: ${report['ingredients_cost']:.2f}")
+print(f"Энергия: {report['energy_kwh']:.2f} kWh")
