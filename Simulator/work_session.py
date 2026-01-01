@@ -28,7 +28,10 @@ class WorkSession:
         for _ in range(self.taps):
             count = random.randint(1, 4)
             pizzas = [random.choice(pizza_types) for _ in range(count)]
-            orders.append({"pizzas": pizzas, "remaining_time": self.calc_prep_time(count)})
+            orders.append({
+                "pizzas": pizzas,
+                "remaining_time": self.calc_prep_time(count)
+            })
         return orders
 
     @staticmethod
@@ -61,7 +64,7 @@ class WorkSession:
             # 1️⃣ Энергия оборудования за минуту
             self.pizzeria.energy.add(self.pizzeria.calculate_energy_per_minute())
 
-            # 2️⃣ Наполнение стола из холодильника при необходимости
+            # 2️⃣ Наполнение стола из холодильника при необходимости (менее 30%)
             moved = self.pizzeria.fill_table_if_needed()
             report["dough_moved_to_table_kg"] += moved
 
@@ -78,28 +81,38 @@ class WorkSession:
             # 5️⃣ Обработка текущего заказа
             if self.orders_queue:
                 order = self.orders_queue[0]
-                # Проверяем есть ли тесто и ингредиенты на столе
                 can_make = True
+                # Проверка теста и ингредиентов
                 for pizza in order["pizzas"]:
                     recipe = self.pizzeria.production.recipes[f"pizza_{pizza}"]
                     if self.pizzeria.proofing_fridge.current_load < recipe["dough"]:
                         can_make = False
                         break
                     for ing, kg in recipe.items():
-                        if ing != "dough" and self.pizzeria.table.current_load < kg:
+                        if ing != "dough" and self.pizzeria.table_stock[ing] < kg:
                             can_make = False
                             break
+
                 if can_make:
-                    # Списываем тесто
+                    # Списываем тесто и ингредиенты
                     for pizza in order["pizzas"]:
                         recipe = self.pizzeria.production.recipes[f"pizza_{pizza}"]
+                        # Тесто
                         self.pizzeria.proofing_fridge.remove(recipe["dough"])
-                        self.pizzeria.table.empty()  # упрощаем списание ингредиентов
+                        # Ингредиенты со стола + потери
+                        for ing, kg in recipe.items():
+                            if ing == "dough":
+                                continue
+                            loss = kg * self.pizzeria.production.ingredients_loss_pct
+                            self.pizzeria.table_stock[ing] -= (kg + loss)
+
+                    # Заказ готов
                     order["remaining_time"] -= 1
                     if order["remaining_time"] <= 0:
                         report["completed_orders"] += 1
                         self.orders_queue.pop(0)
                 else:
+                    # Заказ пропадает, если нет ресурсов
                     report["failed_orders"] += 1
                     self.orders_queue.pop(0)
 
