@@ -62,10 +62,15 @@ class Table:
 
 
 class Oven:
-    def __init__(self, power_kw, capacity=4):
+    def __init__(self, power_kw, capacity=4):  # capacity = 4 пиццы по умолчанию
         self.power_kw = power_kw
         self.capacity = capacity
         self.on = False
+
+self.oven = Oven(
+    power_kw=eq["oven"]["power_kw"],
+    capacity=eq["oven"].get("capacity", 4)  # берём из JSON или дефолт 4
+)
 
     def energy_per_minute(self):
         return self.power_kw / 60 if self.on else 0
