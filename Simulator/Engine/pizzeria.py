@@ -1,63 +1,59 @@
 # simulator/engine/pizzeria.py
 
-from engine.production import DoughMixer
+from engine.production import Production
 from engine.energy import EnergyTracker
-import json
-import os
-import random
-from datetime import datetime, timedelta
+from datetime import datetime
+from collections import deque
 
 class Fridge:
-    def __init__(self, name, max_load, min_load_ratio=0.3, spoil_hours=48):
+    def __init__(self, name, max_load, power_kw, spoil_hours=48):
         self.name = name
         self.max_load = max_load
-        self.min_load = max_load * min_load_ratio
-        self.current_load = 0.0  # кг
+        self.power_kw = power_kw
+        self.current_load = 0.0
+        self.items = deque()  # (kg, timestamp)
         self.spoil_hours = spoil_hours
-        self.items = []  # list of tuples (weight, timestamp)
 
-    def add_dough(self, weight):
-        timestamp = datetime.now()
-        self.items.append((weight, timestamp))
-        self.current_load += weight
+    def add(self, kg):
+        self.items.append((kg, datetime.now()))
+        self.current_load += kg
 
-    def remove_dough(self, weight):
+    def remove(self, kg):
         removed = 0
-        while weight > 0 and self.items:
-            w, ts = self.items[0]
-            if w <= weight:
-                weight -= w
-                removed += w
-                self.items.pop(0)
+        while kg > 0 and self.items:
+            batch, ts = self.items[0]
+            take = min(batch, kg)
+            batch -= take
+            kg -= take
+            removed += take
+            self.current_load -= take
+            if batch <= 0:
+                self.items.popleft()
             else:
-                self.items[0] = (w - weight, ts)
-                removed += weight
-                weight = 0
-        self.current_load -= removed
+                self.items[0] = (batch, ts)
         return removed
 
     def check_spoilage(self):
         now = datetime.now()
         spoiled = 0
-        new_items = []
-        for w, ts in self.items:
-            if (now - ts).total_seconds() / 3600 > self.spoil_hours:
-                spoiled += w
+        new_items = deque()
+        for kg, ts in self.items:
+            if (now - ts).total_seconds()/3600 > self.spoil_hours:
+                spoiled += kg
+                self.current_load -= kg
             else:
-                new_items.append((w, ts))
+                new_items.append((kg, ts))
         self.items = new_items
-        self.current_load -= spoiled
         return spoiled
 
 class Table:
-    def __init__(self, max_load, min_load_ratio=0.3):
+    def __init__(self, max_load):
         self.max_load = max_load
-        self.min_load = max_load * min_load_ratio
         self.current_load = 0.0
 
-    def fill(self, amount):
+    def fill(self, kg):
         space = self.max_load - self.current_load
-        to_add = min(space, amount)
+        to_add = min(space, kg)
         self.current_load += to_add
         return to_add
 
@@ -67,83 +63,72 @@ class Table:
         return temp
 
 class Oven:
-    def __init__(self, power_kw=8):
+    def __init__(self, power_kw, capacity):
         self.power_kw = power_kw
+        self.capacity = capacity
         self.on = False
 
     def energy_per_minute(self):
         return self.power_kw / 60 if self.on else 0
 
+class DoughMixer:
+    def __init__(self, max_load, min_load, power_kw, time_min):
+        self.max_load = max_load
+        self.min_load = min_load
+        self.power_kw = power_kw
+        self.time_min = time_min
+
+    def mix(self, kg):
+        kg = max(self.min_load, min(kg, self.max_load))
+        return kg
+
+    def energy_per_mix(self):
+        return self.power_kw * (self.time_min/60)
+
 class Pizzeria:
     def __init__(self, config_folder="config"):
-        # Загружаем конфиги
-        self.config_folder = config_folder
-        self.load_configs()
+        self.production = Production(config_folder)
+        self.energy = EnergyTracker()
 
-        # Энергия
-        self.energy_tracker = EnergyTracker()
+        import json
+        with open(f"{config_folder}/equipment.json", "r", encoding="utf-8") as f:
+            eq = json.load(f)
 
-        # Оборудование
-        self.dough_mixer = DoughMixer(self.equipment["dough_mixer"])
-        self.oven = Oven(self.equipment["oven"]["power_kw"])
-        self.proofing_fridge = Fridge("proofing", max_load=self.equipment["proofing_fridge"]["max_load"], spoil_hours=48)
-        self.ingredients_fridge = Fridge("ingredients", max_load=self.equipment["ingredient_fridge"]["max_load"], spoil_hours=168)  # 7 дней
-        self.table = Table(max_load=self.equipment["table"]["max_load"])
+        # оборудование
+        self.dough_mixer = DoughMixer(**eq["dough_mixer"])
+        self.oven = Oven(eq["oven"]["power_kw"], eq["oven"]["capacity"])
+        self.proofing_fridge = Fridge("proofing", eq["proofing_fridge"]["max_load"], eq["proofing_fridge"]["power_kw"], spoil_hours=48)
+        self.ingredients_fridge = Fridge("ingredients", eq["ingredient_fridge"]["max_load"], eq["ingredient_fridge"]["power_kw"], spoil_hours=168)
+        self.table = Table(eq["table"]["max_load"])
 
-    def load_configs(self):
-        def load_json(file):
-            with open(os.path.join(self.config_folder, file), "r") as f:
-                return json.load(f)
-        self.equipment = load_json("equipment.json")
-        self.ingredients = load_json("ingredients.json")
-        self.recipes = load_json("recipes.json")
-        self.prices = load_json("prices.json")
-
-    # ==================== Методы для WorkSession ====================
+    # =========================
+    # Методы для WorkSession
+    # =========================
     def fill_table_if_needed(self):
-        if self.table.current_load < self.table.min_load:
-            amount_needed = self.table.max_load - self.table.current_load
-            available = self.ingredients_fridge.current_load
-            moved = min(amount_needed, available)
-            if moved > 0:
-                self.ingredients_fridge.remove_dough(moved)
-                self.table.fill(moved)
-                print(f"🧑‍🍳 Стол наполнен {moved:.2f} кг ингредиентов")
+        if self.table.current_load < self.table.max_load*0.3:
+            moved = self.ingredients_fridge.remove(self.table.max_load - self.table.current_load)
+            self.table.fill(moved)
+            return moved
+        return 0
 
-    def load_ready_dough_to_cooking_area(self):
-        # Перемещение теста из расстоечного холодильника на стол для печи
-        max_cooking = 10  # поддонов
-        # поддон = 1 кг
-        ready_dough = min(max_cooking - self.table.current_load, self.proofing_fridge.current_load)
-        if ready_dough > 0:
-            self.proofing_fridge.remove_dough(ready_dough)
-            self.table.fill(ready_dough)
-            print(f"🍞 {ready_dough} кг теста перемещено на стол для готовки")
+    def load_dough_to_table(self):
+        moved = self.proofing_fridge.remove(min(10, self.proofing_fridge.current_load))
+        self.table.fill(moved)
+        return moved
 
     def return_table_to_fridge(self):
-        returned = self.table.empty()
-        if returned > 0:
-            self.ingredients_fridge.add_dough(returned)
-            print(f"🔄 Остаток со стола {returned:.2f} кг вернулся в холодильник ингредиентов")
-
-    def calculate_energy_per_minute(self):
-        energy = 0
-        # Печь
-        energy += self.oven.energy_per_minute()
-        # Стол (условно)
-        energy += self.equipment["table"]["power_kw"] / 60
-        # Холодильники 24/7
-        energy += self.equipment["proofing_fridge"]["power_kw"] / 60
-        energy += self.equipment["ingredient_fridge"]["power_kw"] / 60
-        return energy
+        kg = self.table.empty()
+        self.ingredients_fridge.add(kg)
+        return kg
 
     def check_spoilage(self):
-        # Тесто в расстоечном холодильнике
         spoiled_dough = self.proofing_fridge.check_spoilage()
-        if spoiled_dough > 0:
-            print(f"⚠️  {spoiled_dough:.2f} кг теста испорчено в расстоечном холодильнике")
-        # Ингредиенты
         spoiled_ing = self.ingredients_fridge.check_spoilage()
-        if spoiled_ing > 0:
-            print(f"⚠️  {spoiled_ing:.2f} кг ингредиентов испорчено в холодильнике")
         return spoiled_dough + spoiled_ing
+
+    def calculate_energy_per_minute(self):
+        total = 0
+        total += self.oven.energy_per_minute()
+        total += self.proofing_fridge.power_kw / 60
+        total += self.ingredients_fridge.power_kw / 60
+        return total
