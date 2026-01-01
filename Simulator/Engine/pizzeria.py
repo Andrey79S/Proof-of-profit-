@@ -4,6 +4,7 @@ from engine.production import Production
 from engine.energy import EnergyTracker
 from datetime import datetime
 from collections import deque
+from engine.dough_mixer import DoughMixer
 
 class Fridge:
     def __init__(self, name, max_load, power_kw, spoil_hours=48):
