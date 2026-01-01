@@ -62,7 +62,7 @@ class Table:
 
 
 class Oven:
-    def __init__(self, power_kw, capacity):
+    def __init__(self, power_kw, capacity=4):
         self.power_kw = power_kw
         self.capacity = capacity
         self.on = False
