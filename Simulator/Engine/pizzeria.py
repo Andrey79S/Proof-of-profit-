@@ -14,30 +14,32 @@ class Pizzeria:
         # Энергия за день (печь + холодильники + стол + тестомес)
         self.daily_energy_kwh = 12 * (8 + 0.5 + 0.25 + 3)  # грубо
 
-    def process_orders_day(self, orders_per_day):
-        pizzas_made = {"Margarita": 0, "Pepperoni": 0}
-        ingredient_cost_total = 0.0
-        self.production.fill_table_from_fridge()
+    def process_orders_day(self, orders_count):
+    import random
 
-        for _ in range(orders_per_day):
-            # Случайный заказ 1-4 пиццы
-            import random
-            qty = random.randint(1, 4)
-            for _ in range(qty):
-                pizza_name = random.choice(["pizza_margarita", "pizza_pepperoni"])
-                success, ing_cost = self.production.produce_pizza(pizza_name)
-                if success:
-                    pizzas_made[pizza_name.replace("pizza_", "").capitalize()] += 1
-                    ingredient_cost_total += ing_cost
-                    self.total_sales += self.prices[pizza_name.replace("pizza_", "").capitalize()]
-                self.total_orders += 1
+    report = {
+        "pizzas": {"Margarita": 0, "Pepperoni": 0},
+        "ingredient_cost": 0.0,
+        "energy_kwh": 0.0
+    }
 
-        self.total_pizzas["Margarita"] += pizzas_made["Margarita"]
-        self.total_pizzas["Pepperoni"] += pizzas_made["Pepperoni"]
-        self.total_energy_kwh += self.daily_energy_kwh
+    for _ in range(orders_count):
+        pizza_type = random.choice(["Margarita", "Pepperoni"])
 
-        return {
-            "ingredient_cost": round(ingredient_cost_total, 2),
-            "energy_kwh": round(self.daily_energy_kwh, 2),
-            "pizzas": pizzas_made
+        result = self.production.make_pizza(pizza_type)
+
+        if not result["success"]:
+            # нет теста или ингредиентов → заказ потерян
+            continue
+
+        # статистика
+        report["pizzas"][pizza_type] += 1
+        report["ingredient_cost"] += result["ingredient_cost"]
+        report["energy_kwh"] += result["energy_kwh"]
+
+        self.total_sales += result["price"]
+        self.total_orders += 1
+        self.total_pizzas[pizza_type] += 1
+
+    return report
         }
