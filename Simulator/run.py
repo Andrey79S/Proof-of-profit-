@@ -1,14 +1,15 @@
 from core.clock import Clock
-from core.scheduler import Scheduler
-from core.event import Event
+from domain.order import Order
+from domain.order_pool import OrderPool
 
 clock = Clock()
-scheduler = Scheduler(clock)
+pool = OrderPool()
 
-def hello():
-    print(f"Привет! Время = {clock.now} мин")
+pool.add(Order("margarita", clock.now, max_wait=30))
+pool.add(Order("pepperoni", clock.now, max_wait=5))
 
-scheduler.schedule(Event(10, hello))
-scheduler.schedule(Event(30, hello))
+clock.advance(10)
+pool.expire_orders(clock.now)
 
-scheduler.run_until(60)
+print(pool.stats())
+print(pool.get_available(clock.now))
