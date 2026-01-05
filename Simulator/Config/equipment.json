@@ -1,24 +1,5 @@
 {
-  "dough_mixer": {
-    "min_load": 15,
-    "max_load": 35,
-    "power_kw": 3,
-    "time_min": 15
-  },
-  "oven": {
-    "power_kw": 8,
-    "capacity": 4
-  },
-  "proofing_fridge": {
-    "max_load": 20,
-    "power_kw": 0.32
-  },
-  "ingredient_fridge": {
-    "max_load": 20,
-    "power_kw": 0.2
-  },
-  "table": {
-    "max_load": 5,
-    "power_kw": 0.25
-  }
+  "dough_mixer": {"min_load": 15, "max_load": 35, "power_kw": 3, "time_min": 15},
+  "oven1": {"power_kw": 8, "capacity": 4, "bake_time_min": 5},
+  "oven2": {"power_kw": 10, "capacity": 2, "bake_time_min": 4}
 }
