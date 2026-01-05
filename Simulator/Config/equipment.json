@@ -1,5 +1,5 @@
 {
   "dough_mixer": {"min_load": 15, "max_load": 35, "power_kw": 3, "time_min": 15},
-  "oven1": {"power_kw": 6, "capacity": 2, "bake_time_min": 5},
-  "oven2": {"power_kw": 10, "capacity": 4, "bake_time_min": 4}
+  "oven1": {"power_kw": 6, "capacity": 2, "bake_time_min": 6},
+  "oven2": {"power_kw": 10, "capacity": 4, "bake_time_min": 5}
 }
