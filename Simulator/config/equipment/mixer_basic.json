@@ -1,0 +1,7 @@
+{
+  "name": "Basic Mixer",
+  "min_load_kg": 15,
+  "max_load_kg": 35,
+  "power_kw": 3,
+  "mix_time_min": 15
+}
