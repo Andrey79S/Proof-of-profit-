@@ -1,82 +1,46 @@
+import json
+
 class Production:
-    def __init__(self, config: dict):
-        self.ingredients = config["ingredients"]
-        self.recipes = config["recipes"]
-        self.prices = config["prices"]
-        self.equipment = config["equipment"]
+    def __init__(self, equipment, ingredients, recipes):
+        self.equipment = equipment
+        self.ingredients = ingredients
+        self.recipes = recipes
+        self.total_dough_kg = 0
+        self.energy_used = 0
 
-        # Остатки
-        self.dough_kg = 0.0
-
-        # Статистика
-        self.total_energy_kwh = 0.0
-
-    # ---------- ВСПОМОГАТЕЛЬНОЕ ----------
-
-    def _ingredient_cost(self, name, kg):
-        return self.ingredients[name]["price_per_kg"] * kg
-
-    # ---------- ТЕСТО ----------
-
-    def mix_dough(self):
-        mixer = self.equipment["dough_mixer"]
-
-        batch_kg = mixer["min_load"]
+    def make_dough(self, kg):
         recipe = self.recipes["dough"]
+        for ing, amount in recipe.items():
+            needed = amount * kg
+            if self.ingredients[ing]["stock_kg"] < needed:
+                return False
+            self.ingredients[ing]["stock_kg"] -= needed
+            self.energy_used += self.equipment["dough_mixer"].power_kw * self.equipment["dough_mixer"].time_min / 60
+        self.total_dough_kg += kg
+        return True
 
-        cost = 0.0
-        for ingredient, part in recipe.items():
-            cost += self._ingredient_cost(ingredient, part * batch_kg)
+    def can_make_pizza(self, pizza_name, quantity):
+        recipe = self.recipes[pizza_name]
+        for ing, amount in recipe.items():
+            if ing == "dough":
+                if self.total_dough_kg < amount * quantity:
+                    return False
+            else:
+                if self.ingredients[ing]["stock_kg"] < amount * quantity:
+                    return False
+        return True
 
-        # энергия
-        energy = (
-            mixer["power_kw"] *
-            mixer["time_min"] / 60
-        )
-
-        self.dough_kg += batch_kg
-        self.total_energy_kwh += energy
-
-        return {
-            "kg": batch_kg,
-            "cost": cost,
-            "energy_kwh": energy
-        }
-
-    # ---------- ПИЦЦА ----------
-
-    def make_pizza(self, pizza_type):
-        recipe_key = f"pizza_{pizza_type.lower()}"
-        recipe = self.recipes[recipe_key]
-
-        dough_needed = recipe["dough"]
-
-        # если теста не хватает — мешаем
-        if self.dough_kg < dough_needed:
-            self.mix_dough()
-
-        if self.dough_kg < dough_needed:
-            return {"success": False}
-
-        self.dough_kg -= dough_needed
-
-        ingredient_cost = 0.0
-        for ingredient, kg in recipe.items():
-            if ingredient == "dough":
-                continue
-            ingredient_cost += self._ingredient_cost(ingredient, kg)
-
-        # печь
-        oven = self.equipment["oven"]
-        energy = oven["power_kw"] / oven["capacity"]
-
-        self.total_energy_kwh += energy
-
-        price = self.prices["pizza_prices"][pizza_type]
-
-        return {
-            "success": True,
-            "ingredient_cost": ingredient_cost,
-            "energy_kwh": energy,
-            "price": price
-        }
+    def make_pizza(self, pizza_name, quantity):
+        if not self.can_make_pizza(pizza_name, quantity):
+            return 0
+        recipe = self.recipes[pizza_name]
+        for ing, amount in recipe.items():
+            if ing == "dough":
+                self.total_dough_kg -= amount * quantity
+            else:
+                self.ingredients[ing]["stock_kg"] -= amount * quantity
+        # энергия на выпечку
+        total_capacity = sum(o.capacity for o in self.equipment.values() if hasattr(o, "capacity"))
+        total_bake_time = max(o.bake_time_min for o in self.equipment.values() if hasattr(o, "bake_time_min"))
+        self.energy_used += sum(o.power_kw for o in self.equipment.values() if hasattr(o, "power_kw")) * total_bake_time / 60
+        return quantity
