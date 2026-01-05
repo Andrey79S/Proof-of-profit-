@@ -1,7 +1,10 @@
 {
-  "name": "Basic Mixer",
-  "min_load_kg": 15,
-  "max_load_kg": 35,
-  "power_kw": 3,
-  "mix_time_min": 15
+  "name": "Mixer Basic",
+  "type": "mixer",
+  "capacity": 30,
+  "power_kw": 3.0,
+  "active_only_when_used": true,
+  "params": {
+    "mix_time_min": 15
+  }
 }
