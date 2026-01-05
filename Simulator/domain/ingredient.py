@@ -1,14 +1,14 @@
+# domain/ingredient.py
 class Ingredient:
-    def __init__(self, name: str, amount: float, unit: str, expires_at: int):
+    def __init__(self, name, price_per_kg, quantity_kg=0):
         self.name = name
-        self.amount = amount
-        self.unit = unit
-        self.expires_at = expires_at
+        self.price_per_kg = price_per_kg
+        self.quantity_kg = quantity_kg
 
-    def is_expired(self, now: int) -> bool:
-        return now >= self.expires_at
+    def add(self, kg):
+        self.quantity_kg += kg
 
-    def consume(self, qty: float):
-        if qty > self.amount:
-            raise ValueError("Not enough ingredient")
-        self.amount -= qty
+    def remove(self, kg):
+        if kg > self.quantity_kg:
+            raise ValueError(f"Недостаточно {self.name}")
+        self.quantity_kg -= kg
