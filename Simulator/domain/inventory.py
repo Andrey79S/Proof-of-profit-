@@ -1,25 +1,17 @@
+# domain/inventory.py
 from domain.ingredient import Ingredient
 
 class Inventory:
     def __init__(self):
-        self.items = []
+        self.ingredients = {}
 
-    def add(self, ingredient: Ingredient):
-        self.items.append(ingredient)
+    def add_ingredient(self, ingredient: Ingredient):
+        self.ingredients[ingredient.name] = ingredient
 
-    def cleanup(self, now: int):
-        self.items = [i for i in self.items if not i.is_expired(now)]
+    def use_ingredient(self, name, amount):
+        if name not in self.ingredients:
+            raise ValueError(f"{name} нет в инвентаре")
+        self.ingredients[name].remove(amount)
 
-    def total(self, name: str) -> float:
-        return sum(i.amount for i in self.items if i.name == name)
-
-    def consume(self, name: str, qty: float):
-        needed = qty
-        for i in self.items:
-            if i.name == name:
-                take = min(i.amount, needed)
-                i.amount -= take
-                needed -= take
-                if needed <= 0:
-                    return
-        raise ValueError(f"Not enough {name}")
+    def check_available(self, name, amount):
+        return self.ingredients.get(name, Ingredient(name, 0)).quantity_kg >= amount
