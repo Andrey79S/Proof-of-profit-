@@ -1,34 +1,33 @@
-from engine.production import Production
-from engine.equipment import DoughMixer, Oven
-import json
-
 class Pizzeria:
-    def __init__(self, name, equipment_config, ingredients_config, recipes_config):
+    def __init__(self, name, inventory, equipment, staff):
         self.name = name
-        self.total_pizzas = {}
-        self.total_orders = 0
-        self.total_costs = 0
-        self.energy_used = 0
+        self.inventory = inventory
+        self.equipment = equipment
+        self.staff = staff
+        self.active_orders: list[Order] = []
 
-        # загрузка конфигов
-        with open(equipment_config, "r", encoding="utf-8") as f:
-            eq_data = json.load(f)
-        with open(ingredients_config, "r", encoding="utf-8") as f:
-            ingredients = json.load(f)
-        with open(recipes_config, "r", encoding="utf-8") as f:
-            recipes = json.load(f)
+    def can_make(self, order: Order) -> bool:
+        """Проверка: есть ли ресурсы и свободное оборудование"""
+        recipe = order.recipe
+        return self.inventory.has_ingredients(recipe) and self.equipment.has_free_slot(recipe)
 
-        self.equipment = {}
-        for key, val in eq_data.items():
-            if "bake_time_min" in val:
-                self.equipment[key] = Oven(**val)
-            else:
-                self.equipment[key] = DoughMixer(**val)
+    def accept_order(self, order: Order, now: int):
+        if not self.can_make(order):
+            return False
+        order.status = OrderStatus.ACCEPTED
+        order.accepted_at = now
+        self.active_orders.append(order)
+        self.start_cooking(order, now)
+        return True
 
-        self.production = Production(self.equipment, ingredients, recipes)
+    def start_cooking(self, order: Order, now: int):
+        order.status = OrderStatus.COOKING
+        cooking_time = self.equipment.get_cooking_time(order.recipe)
+        # Запланируем завершение через scheduler
+        scheduler.schedule(now + cooking_time, lambda: self.finish_order(order))
 
-    def process_orders(self, orders):
-        for pizza_name, quantity in orders.items():
-            made = self.production.make_pizza(pizza_name, quantity)
-            self.total_pizzas[pizza_name] = self.total_pizzas.get(pizza_name, 0) + made
-            self.total_orders += quantity
+    def finish_order(self, order: Order):
+        order.status = OrderStatus.DONE
+        order.completed_at = scheduler.now
+        self.active_orders.remove(order)
+        self.inventory.consume(order.recipe)
