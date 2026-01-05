@@ -1,17 +1,18 @@
-# domain/inventory.py
-from domain.ingredient import Ingredient
-
 class Inventory:
     def __init__(self):
-        self.ingredients = {}
+        self.ingredients = {
+            "flour": 100,
+            "water": 50,
+            "tomato_sauce": 30,
+            "mozzarella": 20,
+            "pepperoni": 15
+        }
 
-    def add_ingredient(self, ingredient: Ingredient):
-        self.ingredients[ingredient.name] = ingredient
+    def has_ingredients(self, recipe: str) -> bool:
+        needed = recipes[recipe]
+        return all(self.ingredients[i] >= needed[i] for i in needed)
 
-    def use_ingredient(self, name, amount):
-        if name not in self.ingredients:
-            raise ValueError(f"{name} нет в инвентаре")
-        self.ingredients[name].remove(amount)
-
-    def check_available(self, name, amount):
-        return self.ingredients.get(name, Ingredient(name, 0)).quantity_kg >= amount
+    def consume(self, recipe: str):
+        needed = recipes[recipe]
+        for i in needed:
+            self.ingredients[i] -= needed[i]
