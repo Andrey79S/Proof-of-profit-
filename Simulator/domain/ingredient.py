@@ -1,14 +1,16 @@
 # domain/ingredient.py
-class Ingredient:
-    def __init__(self, name, price_per_kg, quantity_kg=0):
-        self.name = name
-        self.price_per_kg = price_per_kg
-        self.quantity_kg = quantity_kg
 
-    def add(self, kg):
-        self.quantity_kg += kg
+from domain.product import Product
 
-    def remove(self, kg):
-        if kg > self.quantity_kg:
-            raise ValueError(f"Недостаточно {self.name}")
-        self.quantity_kg -= kg
+
+class Ingredient(Product):
+    def __init__(
+        self,
+        name: str,
+        quantity: float,
+        created_at: int,
+        shelf_life_min: int,
+        base_price: float
+    ):
+        super().__init__(name, quantity, created_at, shelf_life_min)
+        self.base_price = base_price
