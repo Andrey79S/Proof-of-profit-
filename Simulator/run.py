@@ -1,14 +1,13 @@
-from domain.inventory import Inventory
-from domain.ingredient import Ingredient
-from core.clock import Clock
+from domain.recipe import Recipe
+from domain.kitchen import Kitchen
 
-clock = Clock()
-inv = Inventory()
+pizza = Recipe("Margherita", {
+    "cheese": 0.2,
+    "flour": 0.3
+})
 
-inv.add(Ingredient("cheese", 1.0, "kg", expires_at=20))
-inv.add(Ingredient("cheese", 0.5, "kg", expires_at=100))
+kitchen = Kitchen(inv)
 
-clock.advance(30)
-inv.cleanup(clock.now)
-
-print(inv.total("cheese"))  # ожидаем 0.5
+print(kitchen.can_cook(pizza))  # True
+kitchen.cook(pizza)
+print(inv.total("cheese"))      # 0.3
