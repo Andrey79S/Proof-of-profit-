@@ -1,12 +1,21 @@
 # domain/dough.py
-class Dough:
-    def __init__(self):
-        self.total_kg = 0
 
-    def add(self, kg):
-        self.total_kg += kg
+from domain.product import Product, ProductState
 
-    def remove(self, kg):
-        if kg > self.total_kg:
-            raise ValueError("Недостаточно теста")
-        self.total_kg -= kg
+
+class Dough(Product):
+    def __init__(
+        self,
+        quantity: float,
+        created_at: int,
+        proof_time_min: int,
+        shelf_life_min: int
+    ):
+        super().__init__("dough", quantity, created_at, shelf_life_min)
+        self.proof_time_min = proof_time_min
+        self.state = ProductState.PROOFING
+
+    def update_state(self, now: int):
+        if self.state == ProductState.PROOFING:
+            if now - self.created_at >= self.proof_time_min:
+                self.state = ProductState.READY
