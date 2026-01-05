@@ -1,0 +1,5 @@
+{
+  "name": "Junior Cook",
+  "skill": 1.0,
+  "tasks": ["prepare_dough", "assemble_pizza"]
+}
