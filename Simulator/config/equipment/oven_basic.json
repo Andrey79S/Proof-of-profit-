@@ -1,6 +1,10 @@
 {
-  "name": "Basic Oven",
-  "power_kw": 8,
-  "capacity_pizzas": 4,
-  "bake_time_min": 6
+  "name": "Oven Basic",
+  "type": "oven",
+  "capacity": 4,
+  "power_kw": 8.0,
+  "active_only_when_used": true,
+  "params": {
+    "bake_time_min": 6
+  }
 }
