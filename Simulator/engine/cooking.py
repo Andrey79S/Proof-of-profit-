@@ -1,6 +1,11 @@
+from domain.dough import Dough
+
 class Cooking:
-    @staticmethod
-    def bake(order, pizzeria, scheduler):
-        oven = pizzeria.equipment["oven"]
-        time = oven["time_min"]
-        scheduler.schedule(scheduler.now + time, lambda: pizzeria.finish_order(order))
+    def __init__(self, dough: Dough):
+        self.dough = dough
+
+    def make_pizza(self, recipe: str, amount: float):
+        if self.dough.weight >= amount:
+            self.dough.use(amount)
+            return True
+        return False
