@@ -1,0 +1,6 @@
+{
+  "name": "Proofing Fridge",
+  "max_load_kg": 20,
+  "power_kw": 0.32,
+  "proof_time_min": 30
+}
