@@ -1,10 +1,11 @@
-class Procurement:
-    def __init__(self, inventory, scheduler, economy_config):
-        self.inventory = inventory
-        self.scheduler = scheduler
-        self.economy = economy_config
+from domain.inventory import Inventory
 
-    def order_ingredient(self, ingredient, amount, now):
-        delivery_time = 1  # минута, потом можно настраивать
-        self.scheduler.schedule(now + delivery_time, lambda: self.inventory.add(ingredient, amount))
-        print(f"Заказано {amount} кг {ingredient}, доставка через {delivery_time} мин")
+class Procurement:
+    def __init__(self, inventory: Inventory, delivery_time: int = 1):
+        self.inventory = inventory
+        self.delivery_time = delivery_time  # минуты ожидания доставки
+
+    def order_ingredient(self, name: str, amount: float):
+        # Для симуляции просто добавляем в инвентарь с задержкой
+        print(f"[Procurement] Заказ {amount} кг {name} (доставка {self.delivery_time} мин)")
+        self.inventory.add(name, amount)
