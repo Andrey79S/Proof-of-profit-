@@ -1,15 +1,14 @@
+# core/scheduler.py
 import heapq
 
 class Scheduler:
-    def __init__(self, clock):
-        self.clock = clock
-        self.queue = []
+    def __init__(self):
+        self.events = []
 
     def schedule(self, event):
-        heapq.heappush(self.queue, (event.time, event))
+        heapq.heappush(self.events, (event.time, event))
 
-    def run_until(self, end_time):
-        while self.queue and self.queue[0][0] <= end_time:
-            time, event = heapq.heappop(self.queue)
-            self.clock.now = time
-            event.callback()
+    def run(self, until_minute):
+        while self.events and self.events[0][0] <= until_minute:
+            _, event = heapq.heappop(self.events)
+            event.execute()
