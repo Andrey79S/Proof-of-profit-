@@ -2,8 +2,14 @@ class Production:
     def __init__(self, pizzeria):
         self.pizzeria = pizzeria
 
-    def mix_dough(self):
-        print("Mixing dough...")  # заглушка
+    def can_cook(self, recipe: str) -> bool:
+        # пока упрощённо
+        return True
 
-    def bake_pizza(self):
-        print("Baking pizza...")  # заглушка
+    def cook(self, order):
+        order.status = order.status.COOKING
+
+        # время приготовления (пока фикс)
+        cook_time = 12  # минут
+
+        return cook_time
