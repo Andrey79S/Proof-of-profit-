@@ -1,5 +1,6 @@
 {
   "name": "oven_basic",
+  "type": "oven",
   "power_kw": 8,
   "capacity": 4,
   "cook_time_min": 8
