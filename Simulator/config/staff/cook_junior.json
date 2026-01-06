@@ -1,5 +1,5 @@
 {
-  "name": "Junior Cook",
-  "skill": 1.0,
-  "tasks": ["prepare_dough", "assemble_pizza"]
+  "name": "cook_junior",
+  "role": "cook",
+  "speed_multiplier": 1.0
 }
