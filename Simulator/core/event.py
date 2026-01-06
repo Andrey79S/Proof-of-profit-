@@ -1,4 +1,3 @@
-# core/event.py
 class Event:
     def __init__(self, time, callback, *args, **kwargs):
         self.time = time
@@ -6,5 +5,5 @@ class Event:
         self.args = args
         self.kwargs = kwargs
 
-    def execute(self):
+    def run(self):
         self.callback(*self.args, **self.kwargs)
