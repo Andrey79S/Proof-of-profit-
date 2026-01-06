@@ -1,46 +1,44 @@
 # engine/production.py
-from domain.product import Product
+from domain.product import Dough, Pizza
+from domain.equipment import Oven, DoughMixer, ProofingFridge
+from domain.staff import Staff
 
 class Production:
     def __init__(self, pizzeria):
         self.pizzeria = pizzeria
+        self.dough_mixer = pizzeria.equipment.get_mixer()
+        self.proofing_fridge = pizzeria.equipment.get_proofing_fridge()
+        self.ovens = pizzeria.equipment.get_ovens()
 
-    def mix_dough(self, amount_kg, now):
-        """
-        Замес теста. Проверяем оборудование (миксер + расстоечный холодильник)
-        """
-        mixer = next((e for e in self.pizzeria.equipment if e.type == "mixer"), None)
-        fridge = next((e for e in self.pizzeria.equipment if e.type == "dough_fridge"), None)
-        if not mixer or not fridge:
-            raise ValueError("Нет оборудования для замеса теста")
+    def make_dough(self, amount_kg, staff: Staff):
+        # проверка на наличие свободного оборудования
+        if not self.dough_mixer.is_available():
+            return 0
 
-        # простой расчёт времени: пропорционально количеству
-        cook_time = mixer.cook_time_min * (amount_kg / mixer.capacity)
-        self.pizzeria.inventory.add_product(Product("dough", amount_kg))
+        # тесто замешивается с участием стафа
+        time_required = self.dough_mixer.get_mix_time(amount_kg) / staff.speed_multiplier
+        self.dough_mixer.use(time_required)
+        dough = Dough(amount_kg)
+        self.proofing_fridge.store(dough)
+        return dough
 
-        # оборудование занято до now + cook_time
-        mixer.busy_until = now + cook_time
-        fridge.busy_until = now + cook_time  # тесто расстаивается в холодильнике
-        return cook_time
+    def cook(self, pizza_order):
+        pizza_name = pizza_order.recipe
+        pizza_recipe = self.pizzeria.recipes[pizza_name]
 
-    def cook(self, order):
-        """
-        Приготовление пиццы по рецепту
-        """
-        oven = next((e for e in self.pizzeria.equipment if e.type == "oven"), None)
+        # проверяем наличие ингредиентов
+        if not self.pizzeria.inventory.has_ingredients(pizza_recipe["ingredients"]):
+            return 0
+
+        # вычитаем ингредиенты
+        self.pizzeria.inventory.consume(pizza_recipe["ingredients"])
+
+        # выбираем свободную печь
+        oven = next((o for o in self.ovens if o.is_available()), None)
         if not oven:
-            raise ValueError("Нет печи")
+            return 0
 
-        # считаем сколько пицц одновременно можно поставить в печь
-        num_pizzas = 1  # на данный момент 1 пицца за раз
-        cook_time = oven.cook_time_min
-
-        # списываем ингредиенты
-        for ing, amt in order.recipe["ingredients"].items():
-            self.pizzeria.inventory.consume(ing, amt)
-
-        # списываем тесто
-        self.pizzeria.inventory.consume("dough", order.recipe.get("dough", 0))
-
-        oven.busy_until += cook_time
+        cook_time = oven.get_cook_time()
+        oven.use(cook_time)
+        pizza = Pizza(pizza_name)
         return cook_time
