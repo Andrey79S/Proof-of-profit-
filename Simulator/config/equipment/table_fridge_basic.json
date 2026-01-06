@@ -1,7 +1,5 @@
 {
-    "name": "Table Fridge Basic",
-    "type": "table_fridge",
-    "power_kw": 0.25,
-    "capacity": 5,
-    "auto_off_when_empty": true
+  "name": "ingredient_fridge_table_basic",
+  "power_kw": 0.25,
+  "max_load_kg": 5
 }
