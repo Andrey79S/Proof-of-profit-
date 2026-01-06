@@ -1,7 +1,10 @@
+# domain/product.py
 class Product:
-    def __init__(self, name: str, amount: float):
+    def __init__(self, name, quantity_kg):
         self.name = name
-        self.amount = amount  # кг или шт
+        self.quantity = quantity_kg  # кг
 
-    def __repr__(self):
-        return f"{self.name}: {self.amount:.2f}"
+    def consume(self, amount):
+        if amount > self.quantity:
+            raise ValueError(f"Not enough {self.name}")
+        self.quantity -= amount
