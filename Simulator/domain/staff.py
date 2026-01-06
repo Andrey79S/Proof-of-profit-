@@ -1,14 +1,11 @@
-# domain/staff.py
 class Staff:
-    def __init__(self, name, skill=1.0, speed_factor=1.0):
+    def __init__(self, name, skill_level=1):
         self.name = name
-        self.skill = skill
-        self.speed_factor = speed_factor
-        self.busy_until = 0
+        self.skill_level = skill_level
+        self.busy = False
 
-    def is_free(self, current_time):
-        return current_time >= self.busy_until
+    def assign_task(self):
+        self.busy = True
 
-    def assign(self, current_time, duration_min):
-        self.busy_until = current_time + duration_min
-        return duration_min
+    def complete_task(self):
+        self.busy = False
