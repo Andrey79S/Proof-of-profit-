@@ -1,7 +1,9 @@
 {
-  "name": "Margarita",
-  "dough": 0.2,
-  "tomato_sauce": 0.1,
-  "mozzarella": 0.1,
-  "cook_time": 6
+  "price": 10,
+  "cook_time": 8,
+  "ingredients": {
+    "dough": 0.2,
+    "tomato_sauce": 0.1,
+    "mozzarella": 0.1
+  }
 }
