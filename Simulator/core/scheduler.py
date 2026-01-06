@@ -1,15 +1,13 @@
 class Scheduler:
     def __init__(self):
-        self.queue = []  # список (time, callback)
-        self.now = 0
+        self.events = []
 
-    def schedule(self, time: int, callback):
-        self.queue.append((time, callback))
+    def schedule(self, event):
+        self.events.append(event)
+        self.events.sort(key=lambda e: e.time)
 
-    def tick(self):
-        """Выполнить события на текущую минуту"""
-        for event in list(self.queue):
-            if event[0] <= self.now:
-                event[1]()  # вызываем callback
-                self.queue.remove(event)
-        self.now += 1
+    def run_pending(self, now):
+        to_run = [e for e in self.events if e.time <= now]
+        for e in to_run:
+            e.run()
+            self.events.remove(e)
