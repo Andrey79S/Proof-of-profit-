@@ -1,9 +1,11 @@
 {
-  "price": 10,
-  "cook_time": 8,
+  "name": "margarita",
   "ingredients": {
-    "dough": 0.2,
+    "dough": 0.25,
     "tomato_sauce": 0.1,
     "mozzarella": 0.1
-  }
+  },
+  "equipment": ["oven_basic", "mixer_basic", "work_table"],
+  "staff_required": 1,
+  "cook_time_min": 8
 }
