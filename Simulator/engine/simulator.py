@@ -24,11 +24,10 @@ class SimulatorEngine:
         now = self.clock.now()
 
         # 1. истёкшие заказы
-        for order in self.order_pool.pool:
-            if order.status == order.status.PENDING and order.is_expired(now):
-                order.status = order.status.FAILED
-                self.stats["orders_failed"] += 1
-
+        if order.status == order.status.PENDING and order.is_expired(now):
+    order.status = order.status.FAILED
+    self.stats["orders_failed"] += 1
+    self.stats["orders_total"] += 1
         # 2. берём заказ
         pending = [
             o for o in self.order_pool.pool
