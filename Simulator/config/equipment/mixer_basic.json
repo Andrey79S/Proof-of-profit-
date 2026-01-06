@@ -1,10 +1,7 @@
 {
-  "name": "Mixer Basic",
-  "type": "mixer",
-  "capacity": 30,
-  "power_kw": 3.0,
-  "active_only_when_used": true,
-  "params": {
-    "mix_time_min": 15
-  }
+    "name": "Mixer Basic",
+    "type": "mixer",
+    "power_kw": 3,
+    "capacity": 35,
+    "auto_off_when_empty": false
 }
