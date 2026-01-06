@@ -1,18 +1,9 @@
 class OrderPool:
     def __init__(self):
-        self.orders: list[Order] = []
+        self.pool = []
 
-    def add_order(self, order: Order):
-        self.orders.append(order)
+    def add_order(self, order):
+        self.pool.append(order)
 
-    def get_available(self, now: int):
-        """Возвращает список заказов, которые ещё можно принять"""
-        return [
-            order for order in self.orders
-            if order.status == OrderStatus.PENDING and not order.is_expired(now)
-        ]
-
-    def expire_orders(self, now: int):
-        for order in self.orders:
-            if order.status == OrderStatus.PENDING and order.is_expired(now):
-                order.status = OrderStatus.FAILED
+    def get_pending_orders(self):
+        return [o for o in self.pool if o.status == o.PENDING]
