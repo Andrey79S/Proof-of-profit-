@@ -1,17 +1,18 @@
-# domain/pizzeria.py
-class Pizzeria:
-    def __init__(self, equipment_list, staff_list, inventory):
-        self.equipment = equipment_list
-        self.staff = staff_list
-        self.inventory = inventory
-        self.production = None  # подключается engine.production
+from domain.equipment import EquipmentFactory
+from domain.staff import StaffFactory
+import json
+from pathlib import Path
 
-    def can_accept_order(self, order):
-        # проверяем ингредиенты
-        try:
-            for ing, amt in order.recipe["ingredients"].items():
-                self.inventory.consume(ing, 0)  # проверка
-        except:
-            return False
-        # проверка staff/equipment
-        return True
+class Pizzeria:
+    def __init__(self, config_folder="config"):
+        # оборудование
+        self.equipment = EquipmentFactory.load_all(f"{config_folder}/equipment")
+        # персонал
+        self.staff = StaffFactory.load_all(f"{config_folder}/staff")
+        # экономика
+        with open(Path(config_folder) / "economy.json", "r", encoding="utf-8") as f:
+            self.economy = json.load(f)
+
+        print(f"Loaded {len(self.equipment)} equipment")
+        print(f"Loaded {len(self.staff)} staff")
+        print(f"Economy keys: {list(self.economy.keys())}")
