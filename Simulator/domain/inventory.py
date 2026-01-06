@@ -1,18 +1,17 @@
 class Inventory:
     def __init__(self):
-        self.ingredients = {
-            "flour": 100,
-            "water": 50,
-            "tomato_sauce": 30,
-            "mozzarella": 20,
-            "pepperoni": 15
-        }
+        self.items = {}
 
-    def has_ingredients(self, recipe: str) -> bool:
-        needed = recipes[recipe]
-        return all(self.ingredients[i] >= needed[i] for i in needed)
+    def add(self, product):
+        if product.name not in self.items:
+            self.items[product.name] = 0
+        self.items[product.name] += product.quantity
 
-    def consume(self, recipe: str):
-        needed = recipes[recipe]
-        for i in needed:
-            self.ingredients[i] -= needed[i]
+    def consume(self, name, quantity):
+        if self.items.get(name, 0) >= quantity:
+            self.items[name] -= quantity
+            return True
+        return False
+
+    def get_quantity(self, name):
+        return self.items.get(name, 0)
