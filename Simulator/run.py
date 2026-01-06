@@ -1,5 +1,5 @@
 from domain.inventory import Inventory
-from domain.equipment import Oven, Equipment
+from domain.equipment import Oven
 from domain.staff import Staff
 from domain.pizzeria import Pizzeria
 from domain.order_pool import OrderPool
@@ -8,23 +8,23 @@ from core.clock import Clock
 from engine.simulator import SimulatorEngine
 
 def main():
-    sessions = int(input("Сколько сессий в день: "))
-    hours = int(input("Сколько часов в сессии: "))
-    orders_count = int(input("Сколько заказов в пуле: "))
+    sessions = int(input("Сессий: "))
+    hours = int(input("Часов в сессии: "))
+    pool_size = int(input("Заказов в пуле: "))
 
-    # Инициализация
     inventory = Inventory()
-    equipment_list = [Oven("oven_basic", power_kw=8, capacity=4, bake_time=10)]
-    staff_list = [Staff("Cook 1")]
-    pizzeria = Pizzeria(inventory, equipment_list, staff_list)
+    oven = Oven("oven_basic", 8, 4, 10)
+    staff = [Staff("Cook")]
 
-    order_pool = OrderPool()
-    for i in range(orders_count):
-        order_pool.add_order(Order(recipe="margarita", created_at=0, max_wait=60))
+    pizzeria = Pizzeria(inventory, [oven], staff)
+
+    pool = OrderPool()
+    for _ in range(pool_size):
+        pool.add_order(Order("margarita", 0, 120))
 
     clock = Clock()
-    simulator = SimulatorEngine(pizzeria, order_pool, clock)
-    simulator.run(sessions=sessions, hours_per_session=hours)
+    sim = SimulatorEngine(pizzeria, pool, clock)
+    sim.run(sessions, hours)
 
 if __name__ == "__main__":
     main()
