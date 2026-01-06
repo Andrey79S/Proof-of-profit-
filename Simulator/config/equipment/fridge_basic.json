@@ -2,5 +2,5 @@
   "name": "ingredient_fridge",
   "type": "fridge",
   "power_kw": 0.3,
-  "max_load_kg": 50
+  "max_load_kg": 20
 }
