@@ -1,0 +1,7 @@
+{
+    "name": "Proof Fridge Basic",
+    "type": "proof_fridge",
+    "power_kw": 0.32,
+    "capacity": 20,
+    "auto_off_when_empty": true
+}
