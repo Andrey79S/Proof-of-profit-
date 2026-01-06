@@ -1,10 +1,7 @@
 {
-  "name": "Oven Basic",
-  "type": "oven",
-  "capacity": 4,
-  "power_kw": 8.0,
-  "active_only_when_used": true,
-  "params": {
-    "bake_time_min": 6
-  }
+    "name": "Oven Basic",
+    "type": "oven",
+    "power_kw": 8,
+    "capacity": 4,
+    "auto_off_when_empty": false
 }
