@@ -1,0 +1,7 @@
+{
+    "name": "Fridge Basic",
+    "type": "fridge",
+    "power_kw": 0.2,
+    "capacity": 20,
+    "auto_off_when_empty": true
+}
