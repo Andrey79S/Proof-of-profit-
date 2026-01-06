@@ -1,12 +1,11 @@
 from enum import Enum
 
 class OrderStatus(Enum):
-    PENDING = "pending"      # в пуле
-    ACCEPTED = "accepted"    # приняла пиццерия
-    COOKING = "cooking"      # готовится
-    DONE = "done"            # выполнен
-    FAILED = "failed"        # сорван (время / нет ресурсов)
-
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    COOKING = "cooking"
+    DONE = "done"
+    FAILED = "failed"
 
 class Order:
     _id_counter = 1
@@ -14,16 +13,14 @@ class Order:
     def __init__(self, recipe: str, created_at: int, max_wait: int):
         self.id = Order._id_counter
         Order._id_counter += 1
-
-        self.recipe = recipe              # "margarita", "pepperoni"
-        self.created_at = created_at      # минута создания
-        self.max_wait = max_wait          # сколько клиент ждёт
+        self.recipe = recipe
+        self.created_at = created_at
+        self.max_wait = max_wait
         self.status = OrderStatus.PENDING
-
         self.accepted_at = None
         self.completed_at = None
 
-    def is_expired(self, now: int) -> bool:
+    def is_expired(self, now):
         return now - self.created_at > self.max_wait
 
     def __repr__(self):
