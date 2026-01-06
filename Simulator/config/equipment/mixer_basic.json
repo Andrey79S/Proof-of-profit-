@@ -1,7 +1,8 @@
 {
   "name": "mixer_basic",
+  "type": "dough_mixer",
   "power_kw": 3,
-  "min_load_kg": 5,
-  "max_load_kg": 20,
-  "mix_time_min": 15
+  "min_load_kg": 1,
+  "max_load_kg": 10,
+  "mix_time_per_kg_min": 15
 }
