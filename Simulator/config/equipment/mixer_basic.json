@@ -1,7 +1,7 @@
 {
-    "name": "Mixer Basic",
-    "type": "mixer",
-    "power_kw": 3,
-    "capacity": 35,
-    "auto_off_when_empty": false
+  "name": "mixer_basic",
+  "power_kw": 3,
+  "min_load_kg": 5,
+  "max_load_kg": 20,
+  "mix_time_min": 15
 }
