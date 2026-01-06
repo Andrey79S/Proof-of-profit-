@@ -1,18 +1,9 @@
-# core/clock.py
 class Clock:
     def __init__(self):
-        self.day = 1
-        self.minute = 0  # минута в дне
-        self.total_minutes = 0
+        self.current_minute = 0
 
-    def advance(self, minutes):
-        self.minute += minutes
-        self.total_minutes += minutes
-        while self.minute >= 1440:  # 24*60 минут в дне
-            self.minute -= 1440
-            self.day += 1
+    def tick(self, minutes=1):
+        self.current_minute += minutes
 
-    def current_time(self):
-        h = self.minute // 60
-        m = self.minute % 60
-        return f"День {self.day}, {h:02d}:{m:02d}"
+    def now(self):
+        return self.current_minute
