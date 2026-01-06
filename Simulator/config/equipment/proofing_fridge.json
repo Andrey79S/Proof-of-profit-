@@ -1,0 +1,7 @@
+{
+  "name": "proofing_fridge",
+  "type": "proofing_fridge",
+  "power_kw": 0.5,
+  "max_load_kg": 20,
+  "ambient_temp_c": 25
+}
