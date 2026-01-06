@@ -1,38 +1,17 @@
-# domain/equipment.py
-
-from enum import Enum
-
-
-class EquipmentType(Enum):
-    MIXER = "mixer"
-    DOUGH_FRIDGE = "dough_fridge"
-    INGREDIENT_FRIDGE = "ingredient_fridge"
-    WORKBENCH_FRIDGE = "workbench_fridge"
-    OVEN = "oven"
-
-
 class Equipment:
-    def __init__(
-        self,
-        name: str,
-        eq_type: EquipmentType,
-        capacity: int,
-        power_kw: float,
-        active_only_when_used: bool,
-        params: dict
-    ):
+    def __init__(self, name, power_kw=0):
         self.name = name
-        self.type = eq_type
-        self.capacity = capacity              # max единиц продукта
-        self.power_kw = power_kw               # кВт
-        self.active_only_when_used = active_only_when_used
-        self.params = params                   # спец параметры
+        self.power_kw = power_kw
+        self.in_use = False
 
-        self.is_busy = False                   # управляется engine
-        self.current_load = 0
+    def use(self, duration_min):
+        self.in_use = True
 
-    def can_accept(self, amount: int) -> bool:
-        return self.current_load + amount <= self.capacity
+    def release(self):
+        self.in_use = False
 
-    def __repr__(self):
-        return f"<Equipment {self.name} ({self.type.value})>"
+class Oven(Equipment):
+    def __init__(self, name, power_kw, capacity, bake_time):
+        super().__init__(name, power_kw)
+        self.capacity = capacity
+        self.bake_time = bake_time
