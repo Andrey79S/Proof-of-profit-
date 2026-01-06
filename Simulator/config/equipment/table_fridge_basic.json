@@ -1,0 +1,7 @@
+{
+    "name": "Table Fridge Basic",
+    "type": "table_fridge",
+    "power_kw": 0.25,
+    "capacity": 5,
+    "auto_off_when_empty": true
+}
