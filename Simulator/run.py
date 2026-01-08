@@ -1,5 +1,7 @@
 # run.py
-
+# При запуске — симулируем оффлайн с последнего запуска (пример: 8 часов ночи)
+sim.clock.tick(8 * 60)  # оффлайн-ночь
+sim.step()  # запуск оффлайн-процессов
 import random
 from domain.pizzeria import Pizzeria
 from domain.order_pool import OrderPool
