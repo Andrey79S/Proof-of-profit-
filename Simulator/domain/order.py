@@ -24,4 +24,4 @@ class Order:
         return now - self.created_at > self.max_wait
 
     def __repr__(self):
-        return f"Order(id={self.id}, recipe='{self.recipe}', status={self.status.value}, created_at={self.created_at})"
+        return f"Order(id={self.id}, recipe='{self.recipe}', status={self.status}, created_at={self.created_at})"
