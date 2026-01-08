@@ -1,27 +1,7 @@
-import json
-from pathlib import Path
-
 class Staff:
-    def __init__(self, name, role, speed_multiplier=1.0):
+    def __init__(self, name, skills=None):
         self.name = name
-        self.role = role
-        self.speed_multiplier = speed_multiplier
+        self.skills = skills or {}
 
-    def __repr__(self):
-        return f"<Staff {self.name} role={self.role}>"
-
-class StaffFactory:
-    @staticmethod
-    def load_all(config_folder="config/staff"):
-        staff_members = {}
-        folder = Path(config_folder)
-        for file in folder.glob("*.json"):
-            with open(file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                s = Staff(
-                    name=data["name"],
-                    role=data.get("role", "cook"),
-                    speed_multiplier=data.get("speed_multiplier", 1.0)
-                )
-                staff_members[s.name] = s
-        return staff_members
+    def skill_level(self, skill_name):
+        return self.skills.get(skill_name, 1)  # минимальный уровень 1
