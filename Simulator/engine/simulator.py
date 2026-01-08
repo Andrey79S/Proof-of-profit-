@@ -10,10 +10,11 @@ class Clock:
         self._now += minutes
 
 class SimulatorEngine:
-    def __init__(self, pizzeria, order_pool, clock):
+    def __init__(self, pizzeria, order_pool, clock: Clock, scheduler: Scheduler):
         self.pizzeria = pizzeria
         self.order_pool = order_pool
         self.clock = clock
+        self.scheduler = scheduler 
         self.procurement = Procurement(pizzeria)  # Для закупок
 
         self.stats = {
