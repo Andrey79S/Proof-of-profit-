@@ -1,22 +1,20 @@
 from domain.pizzeria import Pizzeria
 from domain.order_pool import OrderPool
-from domain.order import Order
-from engine.simulator import Clock, SimulatorEngine
-from domain.pizzeria_state import DoughBatch
+from core.clock import Clock
+from core.scheduler import Scheduler
+from engine.simulator import SimulatorEngine
 
 # Инициализация
-pizzeria = Pizzeria(config_path="Simulator/config")  # Путь к config
+pizzeria = Pizzeria(config_path="config")
+pizzeria.add_initial_inventory()  # Начальный инвентарь
 
-# Пример инвентаря
-pizzeria.state.inventory.ingredients = {"tomato_sauce": 20, "mozzarella": 20}
-pizzeria.state.inventory.dough_batches = [DoughBatch(10, 0, 100)]  # amount, prepared, expires
-
-# Пул заказов (задай вручную)
+# Пул заказов
 order_pool = OrderPool()
-for i in range(5):  # 5 заказов
-    order_pool.add_order("margarita", 0, max_wait=30)  # Исправлено здесь!
+for i in range(10):
+    order_pool.add_order("margarita", 0, max_wait=60)  # Правильное имя
 
 # Симулятор
 clock = Clock()
-sim = SimulatorEngine(pizzeria, order_pool, clock)
-sim.run(sessions=1, hours_per_session=1)  # 1 сессия по 1 часу
+scheduler = Scheduler()
+sim = SimulatorEngine(pizzeria, order_pool, clock, scheduler)
+sim.run(total_minutes=60)  # 1 час
