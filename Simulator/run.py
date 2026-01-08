@@ -1,44 +1,22 @@
 from domain.pizzeria import Pizzeria
-from domain.order import Order
 from domain.order_pool import OrderPool
-from core.clock import Clock
-from engine.simulator import SimulatorEngine
-import os
+from domain.order import Order
+from engine.simulator import Clock, SimulatorEngine
+from domain.pizzeria_state import DoughBatch
 
-def load_files(folder):
-    """Возвращает словарь {имя_файла_без_расширения: полный_путь}"""
-    files = {}
-    for f in os.listdir(folder):
-        if f.endswith(".json"):
-            key = f.replace(".json", "")
-            files[key] = os.path.join(folder, f)
-    return files
+# Инициализация
+pizzeria = Pizzeria(config_path="Simulator/config")  # Путь к config
 
-def main():
-    # Конфиги
-    equipment_files = load_files("config/equipment")
-    staff_files = load_files("config/staff")
-    recipe_files = load_files("config/recipes")
+# Пример инвентаря
+pizzeria.state.inventory.ingredients = {"tomato_sauce": 20, "mozzarella": 20}
+pizzeria.state.inventory.dough_batches = [DoughBatch(10, 0, 100)]  # amount, prepared, expires
 
-    # Создаём пиццерию
-    pizzeria = Pizzeria(equipment_files, staff_files, recipe_files)
+# Пул заказов (задай вручную)
+order_pool = OrderPool()
+for i in range(5):  # 5 заказов
+    order_pool.add_order("margarita", 0, max_wait=30)
 
-    # Создаём пул заказов (для симуляции укажем вручную)
-    order_pool = OrderPool()
-    order_pool.add_order(Order("margarita", created_at=0, max_wait=60))
-    order_pool.add_order(Order("pepperoni", created_at=0, max_wait=60))
-
-    # Часы симуляции
-    clock = Clock()
-
-    # Симулятор
-    simulator = SimulatorEngine(pizzeria, order_pool, clock)
-
-    # Сессии: 1 день = 8 часов (для примера)
-    sessions = 1
-    hours_per_session = 8
-
-    simulator.run(sessions, hours_per_session)
-
-if __name__ == "__main__":
-    main()
+# Симулятор
+clock = Clock()
+sim = SimulatorEngine(pizzeria, order_pool, clock)
+sim.run(sessions=1, hours_per_session=1)  # 1 сессия по 1 часу
