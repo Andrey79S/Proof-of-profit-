@@ -7,54 +7,58 @@ class ProductionEngine:
         self.pizzeria = pizzeria
 
     def make_dough(self, now: int) -> bool:
-        """
-        Замес новой партии теста.
-        Требует: миксер, ингредиенты по рецепту dough_batch.json
-        """
-        dough_recipe = self.pizzeria.recipes.get("dough_batch")
+        dough_recipe = self.pizzeria.recipes.get("dough_recipe")
         if not dough_recipe:
-            print("⚠ Нет рецепта теста (dough_batch.json)!")
+            print("⚠ Нет рецепта теста!")
             return False
 
         mixer = next((eq for eq in self.pizzeria.equipment.values() if eq.type == "mixer"), None)
-        if not mixer:
-            print("⚠ Нет миксера!")
+        proofing_fridge = next((eq for eq in self.pizzeria.equipment.values() if eq.type == "proofing_fridge"), None)
+        if not mixer or not proofing_fridge:
+            print("⚠ Нет миксера или расстоечного холодильника!")
             return False
 
-        batch_size = dough_recipe["batch_size_kg"]
+        # Текущее тесто в расстоечном холодильнике
+        current_dough_kg = sum(b.amount_kg for b in self.pizzeria.inventory.dough_batches)
 
-        if not mixer.can_use(batch_size):
-            print(f"⚠ Миксер занят или партия {batch_size} кг не подходит по лимитам")
+        # Максимум по миксеру и холодильнику
+        max_by_mixer = mixer.max_batch_kg
+        free_in_fridge = proofing_fridge.capacity - current_dough_kg
+        target_kg = min(max_by_mixer, free_in_fridge, 20.0)  # не больше 20 кг за раз
+
+        if target_kg < mixer.min_batch_kg:
+            print(f"⚠ Нет места/нужно минимум {mixer.min_batch_kg} кг для замеса")
             return False
 
-        # Проверяем и тратим ингредиенты для замеса
-        for ing_name, qty in dough_recipe["ingredients"].items():
+        # Округляем до разумного (например, по 5 кг)
+        target_kg = max(mixer.min_batch_kg, round(target_kg / 5) * 5)
+
+        # Тратим ингредиенты пропорционально
+        for ing_name, per_kg in dough_recipe["ingredients_per_kg"].items():
+            needed = per_kg * target_kg
             try:
-                self.pizzeria.inventory.consume_ingredient(ing_name, qty)
-            except ValueError as e:
-                print(f"⚠ Недостаточно {ing_name} для замеса теста: {e}")
+                self.pizzeria.inventory.consume_ingredient(ing_name, needed)
+            except ValueError:
+                print(f"⚠ Недостаточно {ing_name} для {target_kg} кг теста")
                 return False
 
-        # Время замеса
-        mix_time = dough_recipe.get("mix_time_min", 20)
+        # Время замеса (базовое + на кг)
+        mix_time = mixer.mix_time_min + dough_recipe.get("mix_time_per_kg_min", 0) * target_kg
 
-        # Энергия за замес
+        # Энергия
         self.pizzeria.energy_consumed += mixer.power_kw * (mix_time / 60.0)
-        electricity_price = self.pizzeria.economy.get("electricity_price_per_kwh", 0.12)
-        self.pizzeria.expenses += mixer.power_kw * (mix_time / 60.0) * electricity_price
+        self.pizzeria.expenses += mixer.power_kw * (mix_time / 60.0) * self.pizzeria.economy.get("electricity_price_per_kwh", 0.12)
 
-        # Создаём партию теста
-        # prepared_at_min — момент замеса
-        # expires_at_min — через proof_time + lifetime
-        proof_time = dough_recipe.get("proof_time_min", 720)   # 12 часов расстойки
-        lifetime = dough_recipe.get("lifetime_min", 2880)     # 48 часов хранения после расстойки
-
+        # Партия теста
+        proof_time = dough_recipe["proof_time_min"]
+        lifetime = dough_recipe["lifetime_after_proof_min"]
         batch = DoughBatch(
-            amount_kg=batch_size,
+            amount_kg=target_kg,
             prepared_at_min=now,
             expires_at_min=now + proof_time + lifetime
         )
         self.pizzeria.inventory.add_dough_batch(batch)
 
-        print(f"✅ Замесили {batch_size} кг теста. Расстойка: {proof_time//60} ч. Готово к использованию через {proof_time//60} ч.")
+        print(f"✅ Замесили {target_kg} кг теста (миксер: {mixer.min_batch_kg}-{mixer.max_batch_kg} кг, холодильник: свободно {free_in_fridge:.1f} кг)")
+        self.pizzeria.clock.tick(int(mix_time))  # время на замес
         return True
