@@ -1,29 +1,35 @@
 import json
 
 class Equipment:
-    def __init__(self, name, min_load, max_load, power_kw, cook_time_min=None):
+    def __init__(self, name: str, type: str, capacity: int | float, power_kw: float, cook_time_min: int = None, min_batch: float = 0, max_batch: float = 0):
         self.name = name
-        self.min_load = min_load
-        self.max_load = max_load
+        self.type = type
+        self.capacity = capacity
         self.power_kw = power_kw
         self.cook_time_min = cook_time_min
-        self.current_load = 0
+        self.min_batch = min_batch
+        self.max_batch = max_batch
+        self.is_busy = False
 
-    def can_process(self, amount):
-        return self.current_load + amount <= self.max_load
+    def can_use(self, amount: float = 0):
+        if self.type == "mixer" and (amount < self.min_batch or amount > self.max_batch):
+            return False
+        return not self.is_busy
 
-    def process(self, amount):
-        self.current_load += amount
+    def use(self, duration_min: int):
+        self.is_busy = True
+        # В симуляции tick(duration_min), потом free
+        self.is_busy = False  # Пока просто, в scheduler добавить event для free
 
 class EquipmentFactory:
     @staticmethod
-    def create_from_json(path):
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
+    def create_from_json(data: dict):
         return Equipment(
             name=data["name"],
-            min_load=data.get("min_load", 0),
-            max_load=data.get("max_load", 0),
-            power_kw=data.get("power_kw", 0),
-            cook_time_min=data.get("cook_time_min", None)
-        )
+            type=data.get("type", ""),
+            capacity=data.get("capacity", 0),
+            power_kw=data.get("power_kw", 0.0),
+            cook_time_min=data.get("cook_time_min"),
+            min_batch=data.get("min_batch_kg", 0),
+            max_batch=data.get("max_batch_kg", 0)
+    )
