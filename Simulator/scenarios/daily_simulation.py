@@ -1,8 +1,9 @@
-for minute in range(day_minutes):
-    scheduler.tick()
-    available_orders = order_pool.get_available(scheduler.now)
-    for order in available_orders:
-        for pizzeria in pizzerias:
-            if pizzeria.accept_order(order, scheduler.now):
-                break  # заказ принят одной пиццерией
-    order_pool.expire_orders(scheduler.now)
+from engine.simulator import SimulatorEngine
+from core.clock import Clock
+from core.scheduler import Scheduler
+
+def simulate_day(pizzeria, order_pool, hours: int = 8):
+    clock = Clock()
+    scheduler = Scheduler()
+    sim = SimulatorEngine(pizzeria, order_pool, clock, scheduler)
+    sim.run(hours * 60)
