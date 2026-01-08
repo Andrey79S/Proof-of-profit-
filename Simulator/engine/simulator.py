@@ -6,6 +6,7 @@ from engine.procurement import Procurement
 class SimulatorEngine:
     def __init__(self, pizzeria, order_pool, clock: Clock, scheduler: Scheduler):
         self.pizzeria = pizzeria
+        self.last_checked = 0  # для оффлайн
         self.order_pool = order_pool
         self.clock = clock
         self.scheduler = scheduler
