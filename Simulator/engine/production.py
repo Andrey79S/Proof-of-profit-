@@ -1,5 +1,3 @@
-# engine/production.py
-
 from domain.product import DoughBatch
 
 class ProductionEngine:
