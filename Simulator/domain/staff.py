@@ -1,21 +1,20 @@
-import json
+# domain/staff.py
+
 from dataclasses import dataclass
 
 @dataclass
 class Staff:
     name: str
     role: str
-    skill_level: int = 1
-    speed_modifier: float = 1.0  # >1 для ускорения
+    speed_multiplier: float = 1.0
+    salary_per_hour: float = 0.0
 
 class StaffFactory:
     @staticmethod
-    def create_from_json(path):
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
+    def create_from_json(data: dict):  # Теперь принимает dict, а не путь!
         return Staff(
             name=data.get("name"),
-            role=data.get("role"),
-            skill_level=data.get("skill_level", 1),
-            speed_modifier=data.get("speed_modifier", 1.0)
+            role=data.get("role", "cook"),
+            speed_multiplier=data.get("speed_multiplier", 1.0),
+            salary_per_hour=data.get("salary_per_hour", 0.0)
         )
