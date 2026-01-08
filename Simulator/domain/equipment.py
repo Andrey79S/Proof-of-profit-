@@ -1,18 +1,31 @@
-from domain.equipment import EquipmentFactory
-from domain.staff import StaffFactory
+# domain/equipment.py
 import json
 from pathlib import Path
 
-class Pizzeria:
-    def __init__(self, config_folder="config"):
-        # оборудование
-        self.equipment = EquipmentFactory.load_all(f"{config_folder}/equipment")
-        # персонал
-        self.staff = StaffFactory.load_all(f"{config_folder}/staff")
-        # экономика
-        with open(Path(config_folder) / "economy.json", "r", encoding="utf-8") as f:
-            self.economy = json.load(f)
+class Equipment:
+    def __init__(self, name, min_load, max_load, power_kw, cook_time_min=None):
+        self.name = name
+        self.min_load = min_load
+        self.max_load = max_load
+        self.power_kw = power_kw
+        self.cook_time_min = cook_time_min
+        self.current_load = 0
 
-        print(f"Loaded {len(self.equipment)} equipment")
-        print(f"Loaded {len(self.staff)} staff")
-        print(f"Economy keys: {list(self.economy.keys())}")
+    def can_process(self, amount):
+        return self.current_load + amount <= self.max_load
+
+    def process(self, amount):
+        self.current_load += amount
+
+class EquipmentFactory:
+    @staticmethod
+    def create_from_json(path):
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return Equipment(
+            name=data["name"],
+            min_load=data.get("min_load", 0),
+            max_load=data.get("max_load", 0),
+            power_kw=data.get("power_kw", 0),
+            cook_time_min=data.get("cook_time_min", None)
+        )
