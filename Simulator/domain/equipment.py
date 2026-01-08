@@ -1,6 +1,4 @@
-# domain/equipment.py
 import json
-from pathlib import Path
 
 class Equipment:
     def __init__(self, name, min_load, max_load, power_kw, cook_time_min=None):
