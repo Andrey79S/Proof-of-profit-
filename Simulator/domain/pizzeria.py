@@ -60,10 +60,13 @@ class Pizzeria:
             return False
 
         return True
-
-    def cook(self, order, now: int):
-        recipe = self.recipes[order.recipe]
-
+def cook(self, order, now: int):
+    recipe = self.recipes[order.recipe]
+        # Потребление со стола
+    for ing, qty in recipe["ingredients"].items():
+        self.inventory.consume_ingredient(ing, qty)  # берёт со стола сначала
+    self.inventory.consume_dough(recipe.get("dough", 0.25), now)
+        
         # Учёт скорости персонала
         staff_speed = next(
             (s.speed_multiplier for s in self.staff.values() if s.role == "cook"),
