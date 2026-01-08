@@ -1,14 +1,1 @@
-{
-  "name": "dough_batch",
-  "batch_size_kg": 20.0,
-  "ingredients": {
-    "flour": 30.0,
-    "water": 18.0,
-    "salt": 1.0,
-    "yeast": 0.5,
-    "olive_oil": 0.5
-  },
-  "mix_time_min": 20,
-  "proof_time_min": 720,
-  "lifetime_min": 2880
-}
+
