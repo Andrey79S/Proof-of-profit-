@@ -14,7 +14,7 @@ pizzeria.state.inventory.dough_batches = [DoughBatch(10, 0, 100)]  # amount, pre
 # Пул заказов (задай вручную)
 order_pool = OrderPool()
 for i in range(5):  # 5 заказов
-    order_pool.add_order("margarita", 0, max_wait=30)
+    order_pool.add_order("margarita", 0, max_wait=30)  # Исправлено здесь!
 
 # Симулятор
 clock = Clock()
