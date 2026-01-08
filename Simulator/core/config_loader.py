@@ -21,11 +21,18 @@ class ConfigLoader:
         return {}
 
     def _load_dir(self, dir_path: Path):
-        if not dir_path.exists():
+        if not dir_path.exists() or not dir_path.is_dir():
             return {}
         items = {}
         for file in dir_path.glob("*.json"):
-            with open(file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            items[data["name"]] = data
+            try:
+                with open(file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                name = data.get("name")
+                if not name:
+                    print(f"Предупреждение: JSON без 'name' пропущен: {file}")
+                    continue
+                items[name] = data
+            except Exception as e:
+                print(f"Ошибка загрузки {file}: {e}")
         return items
