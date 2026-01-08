@@ -18,27 +18,25 @@ class Pizzeria:
         # Начальное готовое тесто
         batch = DoughBatch(100.0, -720, 2880)
         self.inventory.table_dough.append(batch)
-    def __init__(self, config_path="config"):
+    def __init__(self, config_path: str = "config"):
         loader = ConfigLoader(config_path)
         configs = loader.load_all()
 
-        # Оборудование
-        self.equipment = {name: EquipmentFactory.create_from_json(configs["equipment"][name]) for name in configs["equipment"]}
+        self.economy = configs.get("economy", {})
+        self.recipes = configs.get("recipes", {})
+        self.equipment = {name: EquipmentFactory.create_from_json(data) for name, data in configs.get("equipment", {}).items()}
+        self.staff = {name: StaffFactory.create_from_json(data) for name, data in configs.get("staff", {}).items()}
 
-        # Стафф (если папка staff пуста, добавь JSON как в equipment)
-        self.staff = {name: StaffFactory.create_from_json(configs["staff"][name]) for name in configs["staff"]} if "staff" in configs else {}
+        self.inventory = Inventory()
+        self.production_engine = ProductionEngine(self)
 
-        # Рецепты
-        self.recipes = configs["recipes"]
+        self.energy_consumed = 0.0
+        self.revenue = 0.0
+        self.expenses = 0.0
+        self.losses = 0.0
 
-        # Состояние
-        self.state = PizzeriaState()
-        self.state.equipment.equipment = {eq.name: {"count": 1} for eq in self.equipment.values()}  # Пример: 1 единица каждого
-        self.state.staff.staff = {st.name: {"level": st.skill_level, "speed": st.speed_modifier} for st in self.staff.values()}
-
-        # Engine
-        self.production_engine = ProductionEngine(self.recipes, configs["equipment"])
-
+        self.order_pool = None
+        self.clock = None
     def can_accept_order(self, order):
         return self.production_engine.can_cook(self.state, order, 0)  # now_min=0 для простоты
 
