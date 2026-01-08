@@ -5,6 +5,19 @@ from domain.pizzeria_state import PizzeriaState
 from engine.production_engine import ProductionEngine
 
 class Pizzeria:
+    def add_initial_inventory(self):
+        self.inventory.add_ingredient("tomato_sauce", 100.0)
+        self.inventory.add_ingredient("mozzarella", 100.0)
+        self.inventory.add_ingredient("pepperoni", 50.0)
+        self.inventory.add_ingredient("flour", 500.0)
+        self.inventory.add_ingredient("water", 300.0)
+        self.inventory.add_ingredient("salt", 20.0)
+        self.inventory.add_ingredient("yeast", 10.0)
+        self.inventory.add_ingredient("olive_oil", 10.0)
+
+        # Начальное готовое тесто
+        batch = DoughBatch(100.0, -720, 2880)
+        self.inventory.table_dough.append(batch)
     def __init__(self, config_path="config"):
         loader = ConfigLoader(config_path)
         configs = loader.load_all()
