@@ -1,47 +1,39 @@
-from core.config_loader import ConfigLoader
 from domain.order_pool import OrderPool
 from domain.pizzeria import Pizzeria
-from domain.order import Order
-from core.clock import Clock
-from engine.simulator import SimulatorEngine
+from engine.simulator import SimulatorEngine, Clock
 
 def main():
-    # 1️⃣ Загружаем конфиги
-    loader = ConfigLoader("config")
-    configs = loader.load_all()
+    # конфиги оборудования
+    equipment_configs = {
+        "oven_basic": "config/equipment/oven_basic.json",
+        "mixer_basic": "config/equipment/mixer_basic.json",
+        "fridge_basic": "config/equipment/fridge_basic.json",
+    }
 
-    equipment_configs = configs["equipment"]
-    recipe_configs = configs["recipes"]
-    staff_configs = configs["staff"]
+    # конфиги staff
+    staff_configs = {
+        "cook_junior": {"skills": {"cooking": 1}}
+    }
 
-    # 2️⃣ Создаём Pizzeria (игровая пиццерия)
-    pizzeria = Pizzeria(
-        equipment_configs=equipment_configs,
-        recipe_configs=recipe_configs,
-        staff_configs=staff_configs
-    )
+    # рецепты
+    recipes = {
+        "margarita": {"ingredients": {"flour": 0.2, "tomato_sauce": 0.1, "mozzarella": 0.1}},
+        "pepperoni": {"ingredients": {"flour": 0.2, "tomato_sauce": 0.1, "mozzarella": 0.1, "pepperoni": 0.1}}
+    }
 
-    # 3️⃣ Создаём пул заказов (ручной ввод для симуляции)
+    # создаём пиццерию
+    pizzeria = Pizzeria(equipment_configs, staff_configs, recipes)
+
+    # пул заказов
     pool = OrderPool()
-    num_orders = int(input("Сколько заказов в пуле сегодня: "))
-    for i in range(num_orders):
-        # случайно выбираем рецепт
-        recipe = list(recipe_configs.keys())[i % len(recipe_configs)]
-        # создаём заказ (max_wait=30 минут)
-        pool.add_order(Order(recipe=recipe, created_at=0, max_wait=30))
+    for i in range(10):  # 10 заказов для теста
+        pool.add_order("margarita", created_at=0)
+        pool.add_order("pepperoni", created_at=0)
 
-    # 4️⃣ Создаём часы для симуляции
     clock = Clock()
+    sim = SimulatorEngine(pizzeria, pool, clock)
 
-    # 5️⃣ Создаём движок симуляции
-    engine = SimulatorEngine(pizzeria, pool, clock)
-
-    # 6️⃣ Задаём параметры симуляции
-    sessions = int(input("Сколько рабочих сессий в день: "))
-    hours_per_session = int(input("Сколько часов в каждой сессии: "))
-
-    # 7️⃣ Запуск симуляции
-    engine.run(sessions, hours_per_session)
+    sim.run(sessions=1, hours_per_session=2)  # 1 сессия по 2 часа
 
 if __name__ == "__main__":
     main()
