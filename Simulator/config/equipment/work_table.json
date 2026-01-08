@@ -1,7 +1,0 @@
-{
-  "name": "work_table",
-  "type": "work_table",
-  "max_load_kg": 10,
-  "power_kw": 0,
-  "prep_time_per_pizza_min": 2
-}
