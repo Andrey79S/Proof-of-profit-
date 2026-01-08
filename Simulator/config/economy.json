@@ -1,13 +1,4 @@
 {
-  "prices": {
-    "dough_kg": 1.5,
-    "tomato_sauce_kg": 4,
-    "mozzarella_kg": 15,
-    "pepperoni_kg": 20,
-    "electricity_per_kwh": 0.1
-  },
-  "pizza_prices": {
-    "margarita": 8,
-    "pepperoni": 10
-  }
+  "electricity_price_per_kwh": 0.12,
+  "currency": "USD"
 }
