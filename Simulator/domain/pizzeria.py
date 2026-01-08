@@ -1,29 +1,28 @@
-# domain/pizzeria.py
+# В методе can_accept_order(self, order):
 
-from core.config_loader import ConfigLoader
-from domain.equipment import EquipmentFactory
-from domain.staff import StaffFactory
-from domain.inventory import Inventory
-# Убираем или оставляем импорт ProductionEngine — не важно
-from engine.production import ProductionEngine
+def can_accept_order(self, order):
+    recipe = self.recipes.get(order.recipe)
+    if not recipe:
+        return False
 
-class Pizzeria:
-    def __init__(self, config_path: str = "config"):
-        loader = ConfigLoader(config_path)
-        configs = loader.load_all()
+    now = 0  # или self.clock.now(), если clock привязан
 
-        self.economy = configs["economy"]
-        self.recipes = configs["recipes"]
-        self.equipment = {name: EquipmentFactory.create_from_json(data) for name, data in configs["equipment"].items()}
-        self.staff = {name: StaffFactory.create_from_json(data) for name, data in configs["staff"].items()}
+    # Проверка ингредиентов (кроме теста)
+    for ing_name, qty in recipe["ingredients"].items():
+        if ing_name == "dough":
+            continue
+        ing = self.inventory.ingredients.get(ing_name)
+        if not ing or ing.amount_kg < qty:
+            return False
 
-        self.inventory = Inventory()
+    # Проверка теста
+    dough_needed = recipe.get("dough", 0.25)
+    available_dough = sum(
+        b.amount_kg for b in self.inventory.dough_batches
+        if not b.is_expired(now)
+    )
+    if available_dough < dough_needed:
+        return False
 
-        # Создаём engine, передавая self
-        self.production_engine = ProductionEngine(self)
-
-        self.energy_consumed = 0.0
-        self.revenue = 0.0
-        self.expenses = 0.0
-        self.losses = 0.0
-        self.clock = None  # будет установлен в симуляторе
+    # Можно добавить: проверка свободного оборудования и персонала
+    return True
