@@ -1,11 +1,10 @@
-# engine/procurement.py
-import random
+from domain.pizzeria import Pizzeria
 
 class Procurement:
-    def __init__(self, pizzeria):
+    def __init__(self, pizzeria: Pizzeria):
         self.pizzeria = pizzeria
 
-    def order_ingredients(self, ingredient_list):
-        # доставляем через фиксированное время (1 минута в игре)
-        for name, qty in ingredient_list.items():
-            self.pizzeria.inventory.add(name, qty)
+    def order_ingredients(self, ingredients: dict[str, float]):
+        for name, qty in ingredients.items():
+            self.pizzeria.inventory.add_ingredient(name, qty)
+        # Добавить расходы: self.pizzeria.expenses += cost
