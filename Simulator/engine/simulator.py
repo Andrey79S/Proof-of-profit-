@@ -28,6 +28,25 @@ class SimulatorEngine:
 
     def step(self):
         now = self.clock.now()
+        # Оффлайн-процессы с последнего запуска
+        offline_min = now - self.last_checked
+        if offline_min > 0:
+            print(f"Оффлайн: {offline_min} мин — проверка порчи, расстойки")
+            # Порча (уже есть)
+            self._handle_spoilage(now)
+            # Расстойка — просто время течёт, готовность проверяется при использовании
+            self.last_checked = now
+
+        # Проверка смены (рабочие часы)
+        current_hour = (now % (24 * 60)) // 60
+        if current_hour == 10:  # начало смены 10:00
+            self.pizzeria.inventory.start_shift(now)
+            print("Начало смены: включена печь, стол. Перенос ингредиентов/теста.")
+
+        # Автозамес теста (только в смену)
+        if 10 <= current_hour <= 21 and total_dough < 30:
+            self.pizzeria.production_engine.make_dough(now=now)
+            self.clock.tick(25)  # время на замес
 
         # Порча
         losses = self.pizzeria.inventory.check_spoilage(now)
