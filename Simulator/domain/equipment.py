@@ -1,4 +1,4 @@
-# domain/equipment.py
+import json
 
 class Equipment:
     def __init__(
@@ -32,7 +32,6 @@ class Equipment:
         if self.type == "mixer":
             return self.min_batch_kg <= amount_kg <= self.max_batch_kg and not self.is_busy
         return not self.is_busy
-
 
 class EquipmentFactory:
     @staticmethod
