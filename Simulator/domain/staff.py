@@ -1,21 +1,21 @@
 import json
+from dataclasses import dataclass
 
+@dataclass
 class Staff:
-    def __init__(self, name: str, role: str, speed_multiplier: float = 1.0, salary_per_hour: float = 0.0):
-        self.name = name
-        self.role = role
-        self.speed_multiplier = speed_multiplier
-        self.salary_per_hour = salary_per_hour
-
-    def __repr__(self):
-        return f"Staff({self.name}, {self.role}, speed={self.speed_multiplier})"
+    name: str
+    role: str
+    skill_level: int = 1
+    speed_modifier: float = 1.0  # >1 для ускорения
 
 class StaffFactory:
     @staticmethod
-    def create_from_json(data: dict):
+    def create_from_json(path):
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
         return Staff(
-            name=data["name"],
-            role=data["role"],
-            speed_multiplier=data.get("speed_multiplier", 1.0),
-            salary_per_hour=data.get("salary_per_hour", 0.0)
+            name=data.get("name"),
+            role=data.get("role"),
+            skill_level=data.get("skill_level", 1),
+            speed_modifier=data.get("speed_modifier", 1.0)
         )
