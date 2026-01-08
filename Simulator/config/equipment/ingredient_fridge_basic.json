@@ -1,0 +1,7 @@
+{
+  "type": "ingredient_fridge",
+  "name": "ingredient_fridge_basic",
+  "capacity_kg": 60,
+  "power_kw": 0.5,
+  "ingredient_lifetime_min": 4320
+}
