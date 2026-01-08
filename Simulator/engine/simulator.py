@@ -1,4 +1,11 @@
-# engine/simulator.py
+class Clock:
+    def __init__(self):
+        self._now = 0
+    def now(self):
+        return self._now
+    def tick(self, minutes):
+        self._now += minutes
+
 class SimulatorEngine:
     def __init__(self, pizzeria, order_pool, clock):
         self.pizzeria = pizzeria
@@ -42,7 +49,7 @@ class SimulatorEngine:
                 order.accepted_at = now
                 self.stats["orders_total"] += 1
 
-                cook_time = self.pizzeria.production.cook(order)
+                cook_time = self.pizzeria.cook(order)
                 self.clock.tick(cook_time)
 
                 order.status = order.status.DONE
@@ -57,3 +64,5 @@ class SimulatorEngine:
         print("\n=== ОТЧЁТ ===")
         for k, v in self.stats.items():
             print(f"{k}: {v}")
+        print(f"Электроэнергия использована: {self.pizzeria.electricity_consumed:.2f} кВт·ч")
+        print(f"Пицц приготовлено: {self.pizzeria.completed_orders}")
