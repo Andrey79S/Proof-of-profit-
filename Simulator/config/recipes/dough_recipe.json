@@ -1,1 +1,13 @@
-
+{
+  "name": "dough_recipe",
+  "ingredients_per_kg": {
+    "flour": 0.6,
+    "water": 0.36,
+    "salt": 0.02,
+    "yeast": 0.01,
+    "olive_oil": 0.01
+  },
+  "mix_time_min": 20,
+  "proof_time_min": 720,
+  "lifetime_min": 2880
+}
