@@ -1,22 +1,32 @@
+# domain/pizzeria.py
+
 from core.config_loader import ConfigLoader
 from domain.equipment import EquipmentFactory
 from domain.staff import StaffFactory
 from domain.inventory import Inventory
-from domain.product import Pizza
+from domain.product import DoughBatch  # ← Добавлен импорт!
 from engine.production import ProductionEngine
+
 
 class Pizzeria:
     def __init__(self, config_path: str = "config"):
         loader = ConfigLoader(config_path)
         configs = loader.load_all()
 
-        self.economy = configs["economy"]
-        self.recipes = configs["recipes"]
-        self.equipment = {name: EquipmentFactory.create_from_json(data) for name, data in configs["equipment"].items()}
-        self.staff = {name: StaffFactory.create_from_json(data) for name, data in configs["staff"].items()}
+        self.economy = configs.get("economy", {})
+        self.recipes = configs.get("recipes", {})
+        self.equipment = {
+            name: EquipmentFactory.create_from_json(data)
+            for name, data in configs.get("equipment", {}).items()
+        }
+        self.staff = {
+            name: StaffFactory.create_from_json(data)
+            for name, data in configs.get("staff", {}).items()
+        }
 
         self.inventory = Inventory()
         self.production_engine = ProductionEngine(self)
+
         self.energy_consumed = 0.0
         self.revenue = 0.0
         self.expenses = 0.0
@@ -33,7 +43,7 @@ class Pizzeria:
         now = self.clock.now() if self.clock else 0
 
         # Проверка ингредиентов (кроме теста)
-        for ing_name, qty in recipe["ingredients"].items():
+        for ing_name, qty in recipe.get("ingredients", {}).items():
             if ing_name == "dough":
                 continue
             ing = self.inventory.ingredients.get(ing_name)
@@ -49,34 +59,53 @@ class Pizzeria:
         if available_dough < dough_needed:
             return False
 
-        # Можно добавить: проверка свободного оборудования и персонала
         return True
 
     def cook(self, order, now: int):
         recipe = self.recipes[order.recipe]
-        staff_speed = next((s.speed_multiplier for s in self.staff.values() if s.role == "cook"), 1.0)
-        assembly_time = recipe["assembly_time_min"] / staff_speed
-        cook_time = self.equipment["oven_basic"].cook_time_min  # Пример
+
+        # Учёт скорости персонала
+        staff_speed = next(
+            (s.speed_multiplier for s in self.staff.values() if s.role == "cook"),
+            1.0
+        )
+        assembly_time = recipe.get("assembly_time_min", 3) / staff_speed
+
+        # Время в печи (берём из оборудования)
+        oven = self.equipment.get("oven_basic")
+        cook_time = oven.cook_time_min if oven else 10
+
         total_time = int(assembly_time + cook_time)
 
-        # Потребление
-        for ing, qty in recipe["ingredients"].items():
-            self.inventory.consume_ingredient(ing, qty)
-        self.inventory.consume_dough(recipe.get("dough", 0.25), now)
+        # Потребление ингредиентов
+        for ing_name, qty in recipe.get("ingredients", {}).items():
+            if ing_name != "dough":
+                self.inventory.consume_ingredient(ing_name, qty)
 
-        # Энергия
-        power = sum(eq.power_kw for eq in self.equipment.values() if eq.type in ["oven", "mixer"])
-        self.energy_consumed += power * (total_time / 60)  # кВт·ч
-        self.expenses += self.energy_consumed * self.economy["electricity_price_per_kwh"]
+        # Потребление теста
+        dough_used = recipe.get("dough", 0.25)
+        self.inventory.consume_dough(dough_used, now)
+
+        # Энергия (все включённые устройства)
+        active_power = sum(
+            eq.power_kw for eq in self.equipment.values()
+            if eq.type in ["oven", "mixer", "fridge"]
+        )
+        self.energy_consumed += active_power * (total_time / 60.0)
+        electricity_price = self.economy.get("electricity_price_per_kwh", 0.12)
+        self.expenses += active_power * (total_time / 60.0) * electricity_price
 
         # Доход
-        self.revenue += recipe["price"]
+        self.revenue += recipe.get("price", 8.0)
 
         return total_time
 
     def add_initial_inventory(self):
-        # Для теста
+        """Начальный запас для теста симуляции"""
         self.inventory.add_ingredient("tomato_sauce", 50.0)
         self.inventory.add_ingredient("mozzarella", 50.0)
         self.inventory.add_ingredient("pepperoni", 20.0)
-        self.inventory.add_dough_batch(DoughBatch(100.0, 0, 1440))  # 1 день
+
+        # Добавляем большую партию теста (100 кг, срок годности 1440 минут = 24 часа)
+        initial_batch = DoughBatch(amount_kg=100.0, prepared_at_min=0, expires_at_min=1440)
+        self.inventory.add_dough_batch(initial_batch)
