@@ -1,14 +1,12 @@
 import json
+from dataclasses import dataclass
 
+@dataclass
 class Staff:
-    def __init__(self, name, role, skill_level, speed_modifier=1.0):
-        self.name = name
-        self.role = role           # cook, waiter, etc.
-        self.skill_level = skill_level
-        self.speed_modifier = speed_modifier
-
-    def __repr__(self):
-        return f"<Staff {self.name} ({self.role}) skill={self.skill_level}>"
+    name: str
+    role: str
+    skill_level: int = 1
+    speed_modifier: float = 1.0  # >1 для ускорения
 
 class StaffFactory:
     @staticmethod
