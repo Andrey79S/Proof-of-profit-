@@ -1,14 +1,8 @@
+# run.py (минимальный)
 from core.clock import Clock
-from domain.pizzeria import Pizzeria
 from persistence.state import PizzeriaState
 
 clock = Clock()
-pizzeria = Pizzeria()
-pizzeria.add_initial_inventory()
+print("Clock:", clock.now())
 
-PizzeriaState.save(pizzeria, clock)
-
-clock.tick(120)
-
-delta = PizzeriaState.load(pizzeria, clock)
-print("offline delta:", delta)
+# Пока без Pizzeria
