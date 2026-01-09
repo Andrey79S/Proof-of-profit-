@@ -7,4 +7,3 @@ def calculate_economics(orders_done: int, config: dict):
     )
 
     return revenue, expenses
-    
