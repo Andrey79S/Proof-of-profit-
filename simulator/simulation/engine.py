@@ -7,10 +7,9 @@ def simulate_time(pizzeria, config, hours: float):
     if executed <= 0:
         return
 
-    revenue, expenses, flows = calculate_economics(executed, config)
+    revenue, expenses, flows = calculate_economics(executed, pizzeria, config)
 
     pizzeria.ledger.add_revenue(revenue)
     pizzeria.ledger.add_expense(expenses)
-
     pizzeria.ledger.ingredients_used += flows["ingredients_kg"]
     pizzeria.ledger.energy_used += flows["energy_kwh"]
