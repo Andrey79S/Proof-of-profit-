@@ -21,17 +21,20 @@ class Inventory:
         self.dough_batches.append(batch)
 
     def consume_dough(self, amount: float, now: int):
-        available = [b for b in self.dough_batches if not b.is_expired(now)]
-        available.sort(key=lambda b: b.prepared_at_min)
-
-        consumed = 0.0
-        for batch in available:
-            take = min(amount - consumed, batch.amount_kg)
+        total = 0.0
+        to_remove = []
+        for i, batch in enumerate(self.dough_batches):
+            if batch.is_expired(now):
+                to_remove.append(i)
+                continue
+            take = min(amount - total, batch.amount_kg)
             batch.amount_kg -= take
-            consumed += take
+            total += take
             if batch.amount_kg == 0:
-                self.dough_batches.remove(batch)
-            if consumed >= amount:
+                to_remove.append(i)
+            if total >= amount:
                 break
-        if consumed < amount:
+        for i in sorted(to_remove, reverse=True):
+            del self.dough_batches[i]
+        if total < amount:
             raise ValueError("Недостаточно теста")
