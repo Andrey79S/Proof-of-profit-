@@ -2,7 +2,6 @@ class Ledger:
     def __init__(self):
         self.revenue = 0.0
         self.expenses = 0.0
-
         self.ingredients_used = 0.0
         self.energy_used = 0.0
 
