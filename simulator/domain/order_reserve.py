@@ -1,11 +1,14 @@
 class OrderReserve:
-    def __init__(self, max_capacity: int):
-        self.max_capacity = max_capacity
+    def __init__(self, base_capacity: int):
+        self.base_capacity = base_capacity
         self.current = 0
 
-    def add(self, amount: int) -> int:
-        free_space = self.max_capacity - self.current
-        added = min(free_space, amount)
+    def max_capacity(self, pizzeria) -> int:
+        return pizzeria.max_reserve()
+
+    def add(self, amount: int, pizzeria) -> int:
+        free_space = self.max_capacity(pizzeria) - self.current
+        added = max(0, min(free_space, amount))
         self.current += added
         return added
 
