@@ -1,0 +1,18 @@
+{
+    "oven_1": {
+        "name": "oven_1",
+        "type": "oven",
+        "power_kw": 5.0,
+        "cook_time_min": 10
+    },
+    "fridge_1": {
+        "name": "fridge_1",
+        "type": "fridge",
+        "power_kw": 0.5
+    },
+    "table_fridge_1": {
+        "name": "table_fridge_1",
+        "type": "table_fridge",
+        "power_kw": 0.2
+    }
+}
