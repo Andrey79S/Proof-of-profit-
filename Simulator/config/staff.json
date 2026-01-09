@@ -1,0 +1,12 @@
+{
+    "cook_1": {
+        "name": "cook_1",
+        "role": "cook",
+        "speed_multiplier": 1.0
+    },
+    "cook_2": {
+        "name": "cook_2",
+        "role": "cook",
+        "speed_multiplier": 1.2
+    }
+}
