@@ -1,9 +1,21 @@
 def calculate_economics(orders_done: int, config: dict):
     revenue = orders_done * config["price_per_order"]
 
-    expenses = orders_done * (
-        config["ingredient_cost_per_order"]
-        + config["energy_cost_per_order"]
+    ingredient_cost = (
+        orders_done
+        * config["ingredient_kg_per_order"]
+        * config["ingredient_price_per_kg"]
     )
 
-    return revenue, expenses
+    energy_cost = (
+        orders_done
+        * config["energy_kwh_per_order"]
+        * config["energy_price_per_kwh"]
+    )
+
+    expenses = ingredient_cost + energy_cost
+
+    return revenue, expenses, {
+        "ingredients_kg": orders_done * config["ingredient_kg_per_order"],
+        "energy_kwh": orders_done * config["energy_kwh_per_order"],
+    }
