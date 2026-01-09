@@ -1,108 +1,65 @@
 # persistence/state.py
 
 import json
-from typing import Dict, Any
-
-
-STATE_FILE = "pizzeria_state.json"
-
 
 class PizzeriaState:
     """
-    DTO состояния пиццерии.
-    НЕ содержит логики.
+    Хранение состояния пиццерии: доход, расходы, инвентарь, тесто и т.д.
     """
+    def __init__(self, pizzeria):
+        self.pizzeria = pizzeria
 
-    @staticmethod
-    def save(pizzeria, clock) -> None:
-        data: Dict[str, Any] = {
-            "last_seen_minute": clock.now(),
-            "finance": {
-                "revenue": pizzeria.revenue,
-                "expenses": pizzeria.expenses,
-                "losses": pizzeria.losses,
-                "energy_consumed": pizzeria.energy_consumed,
-            },
+    def save(self, filepath):
+        """
+        Сохраняет текущее состояние пиццерии в JSON
+        """
+        data = {
+            "revenue": self.pizzeria.revenue,
+            "expenses": self.pizzeria.expenses,
+            "losses": self.pizzeria.losses,
+            "energy_consumed": self.pizzeria.energy_consumed,
             "inventory": {
-                "ingredients": {
-                    name: ing.amount_kg
-                    for name, ing in pizzeria.inventory.ingredients.items()
-                },
-                "table_ingredients": {
-                    name: ing.amount_kg
-                    for name, ing in pizzeria.inventory.table_ingredients.items()
-                },
+                "ingredients": {k: v.amount_kg for k, v in self.pizzeria.inventory.ingredients.items()},
+                "table_ingredients": {k: v.amount_kg for k, v in self.pizzeria.inventory.table_ingredients.items()},
                 "dough_batches": [
-                    {
-                        "amount_kg": b.amount_kg,
-                        "prepared_at": b.prepared_at_min,
-                        "expires_at": b.expires_at_min,
-                    }
-                    for b in pizzeria.inventory.dough_batches
+                    {"amount_kg": b.amount_kg, "prepared_at_min": b.prepared_at_min, "expires_at_min": b.expires_at_min}
+                    for b in self.pizzeria.inventory.dough_batches
                 ],
                 "table_dough": [
-                    {
-                        "amount_kg": b.amount_kg,
-                        "prepared_at": b.prepared_at_min,
-                        "expires_at": b.expires_at_min,
-                    }
-                    for b in pizzeria.inventory.table_dough
-                ],
-            },
+                    {"amount_kg": b.amount_kg, "prepared_at_min": b.prepared_at_min, "expires_at_min": b.expires_at_min}
+                    for b in self.pizzeria.inventory.table_dough
+                ]
+            }
         }
-
-        with open(STATE_FILE, "w", encoding="utf-8") as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
 
-    @staticmethod
-    def load(pizzeria, clock) -> int:
+    def load(self, filepath):
         """
-        Загружает состояние в агрегат.
-        Возвращает offline_delta (в минутах).
+        Загружает состояние из JSON
         """
-        try:
-            with open(STATE_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-        except FileNotFoundError:
-            return 0
+        with open(filepath, "r", encoding="utf-8") as f:
+            data = json.load(f)
 
-        last_seen = data.get("last_seen_minute", 0)
-        offline_delta = clock.now() - last_seen
+        self.pizzeria.revenue = data.get("revenue", 0.0)
+        self.pizzeria.expenses = data.get("expenses", 0.0)
+        self.pizzeria.losses = data.get("losses", 0.0)
+        self.pizzeria.energy_consumed = data.get("energy_consumed", 0.0)
 
-        finance = data.get("finance", {})
-        pizzeria.revenue = finance.get("revenue", 0.0)
-        pizzeria.expenses = finance.get("expenses", 0.0)
-        pizzeria.losses = finance.get("losses", 0.0)
-        pizzeria.energy_consumed = finance.get("energy_consumed", 0.0)
-
-        inv = data.get("inventory", {})
+        inv = self.pizzeria.inventory
 
         # Ингредиенты
-        for name, amount in inv.get("ingredients", {}).items():
-            pizzeria.inventory.add_ingredient(name, amount)
-
-        for name, amount in inv.get("table_ingredients", {}).items():
-            pizzeria.inventory.add_ingredient(name, amount, to_table=True)
+        for k, v in data.get("inventory", {}).get("ingredients", {}).items():
+            if k in inv.ingredients:
+                inv.ingredients[k].amount_kg = v
+        for k, v in data.get("inventory", {}).get("table_ingredients", {}).items():
+            if k in inv.table_ingredients:
+                inv.table_ingredients[k].amount_kg = v
 
         # Тесто
-        from domain.product import DoughBatch
-
-        for b in inv.get("dough_batches", []):
-            pizzeria.inventory.dough_batches.append(
-                DoughBatch(
-                    amount_kg=b["amount_kg"],
-                    prepared_at_min=b["prepared_at"],
-                    expires_at_min=b["expires_at"],
-                )
-            )
-
-        for b in inv.get("table_dough", []):
-            pizzeria.inventory.table_dough.append(
-                DoughBatch(
-                    amount_kg=b["amount_kg"],
-                    prepared_at_min=b["prepared_at"],
-                    expires_at_min=b["expires_at"],
-                )
-            )
-
-        return max(0, offline_delta)
+        inv.dough_batches = [
+            DoughBatch(**b) for b in data.get("inventory", {}).get("dough_batches", [])
+        ]
+        inv.table_dough = [
+            DoughBatch(**b) for b in data.get("inventory", {}).get("table_dough", [])
+        ]
