@@ -1,5 +1,5 @@
 class Staff:
-    def __init__(self, name: str, role: str, salary_per_hour: float = 0.0):
-        self.name = name
-        self.role = role
-        self.salary_per_hour = salary_per_hour
+    def __init__(self, data: dict):
+        self.name = data["name"]
+        self.role = data["role"]
+        self.salary_per_hour = data.get("salary_per_hour", 0.0)
