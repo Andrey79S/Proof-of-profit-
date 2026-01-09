@@ -1,40 +1,91 @@
-from typing import Dict, List
+# domain/inventory.py
+
+from collections import defaultdict
 from domain.product import DoughBatch
 
+class Ingredient:
+    def __init__(self, name: str, amount_kg: float):
+        self.name = name
+        self.amount_kg = amount_kg
+
 class Inventory:
+    """
+    Хранение ингредиентов и теста
+    """
     def __init__(self):
-        self.ingredients: Dict[str, float] = {}
-        self.dough_batches: List[DoughBatch] = []
+        # Обычные ингредиенты
+        self.ingredients = {}          # name -> Ingredient
+        # Ингредиенты на столе (быстрый доступ для сборки)
+        self.table_ingredients = {}    # name -> Ingredient
 
-    def add_ingredient(self, name: str, amount: float):
-        self.ingredients[name] = self.ingredients.get(name, 0.0) + amount
+        # Тесто
+        self.dough_batches = []        # в холодильнике
+        self.table_dough = []          # на столе, готовое для сборки
 
-    def consume_ingredient(self, name: str, amount: float):
-        current = self.ingredients.get(name, 0.0)
-        if current < amount:
-            raise ValueError(f"Недостаточно {name}: {current} < {amount}")
-        self.ingredients[name] -= amount
-        if self.ingredients[name] == 0:
-            del self.ingredients[name]
+    # ----------------------------------------
+    # Добавление ингредиентов
+    # ----------------------------------------
+    def add_ingredient(self, name: str, amount_kg: float, to_table: bool = False):
+        target = self.table_ingredients if to_table else self.ingredients
+        if name in target:
+            target[name].amount_kg += amount_kg
+        else:
+            target[name] = Ingredient(name, amount_kg)
 
-    def add_dough_batch(self, batch: DoughBatch):
-        self.dough_batches.append(batch)
+    # ----------------------------------------
+    # Списание ингредиентов
+    # ----------------------------------------
+    def consume_ingredient(self, name: str, amount_kg: float):
+        # Сначала со стола
+        table = self.table_ingredients.get(name)
+        if table:
+            if table.amount_kg >= amount_kg:
+                table.amount_kg -= amount_kg
+                return
+            else:
+                amount_kg -= table.amount_kg
+                table.amount_kg = 0
 
-    def consume_dough(self, amount: float, now: int):
-        total = 0.0
-        to_remove = []
-        for i, batch in enumerate(self.dough_batches):
-            if batch.is_expired(now):
-                to_remove.append(i)
+        # Потом из основного склада
+        main = self.ingredients.get(name)
+        if main:
+            if main.amount_kg >= amount_kg:
+                main.amount_kg -= amount_kg
+                return
+            else:
+                main.amount_kg = 0
+
+        # Если не хватило, списываем сколько есть (Pizzeria проверяет can_accept_order перед cook)
+    
+    # ----------------------------------------
+    # Добавление теста
+    # ----------------------------------------
+    def add_dough_batch(self, batch: DoughBatch, to_table: bool = False):
+        if to_table:
+            self.table_dough.append(batch)
+        else:
+            self.dough_batches.append(batch)
+
+    # ----------------------------------------
+    # Списание теста
+    # ----------------------------------------
+    def consume_dough(self, amount_kg: float, now_minute: int):
+        # Сначала со стола
+        self._consume_from_list(self.table_dough, amount_kg, now_minute)
+    
+    def _consume_from_list(self, batches: list, amount_kg: float, now_minute: int):
+        i = 0
+        while amount_kg > 0 and i < len(batches):
+            batch = batches[i]
+            if batch.is_expired(now_minute):
+                i += 1
                 continue
-            take = min(amount - total, batch.amount_kg)
-            batch.amount_kg -= take
-            total += take
-            if batch.amount_kg == 0:
-                to_remove.append(i)
-            if total >= amount:
-                break
-        for i in sorted(to_remove, reverse=True):
-            del self.dough_batches[i]
-        if total < amount:
-            raise ValueError("Недостаточно теста")
+            if batch.amount_kg > amount_kg:
+                batch.amount_kg -= amount_kg
+                return
+            else:
+                amount_kg -= batch.amount_kg
+                batch.amount_kg = 0
+                i += 1
+        # Очистка пустых партий
+        batches[:] = [b for b in batches if b.amount_kg > 0]
