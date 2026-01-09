@@ -1,4 +1,4 @@
-def calculate_economics(orders_done: int, config: dict):
+def calculate_economics(orders_done: int, pizzeria, config: dict):
     revenue = orders_done * config["price_per_order"]
 
     ingredient_cost = (
@@ -13,7 +13,8 @@ def calculate_economics(orders_done: int, config: dict):
         * config["energy_price_per_kwh"]
     )
 
-    expenses = ingredient_cost + energy_cost
+    base_expenses = ingredient_cost + energy_cost
+    expenses = base_expenses * pizzeria.cost_multiplier()
 
     return revenue, expenses, {
         "ingredients_kg": orders_done * config["ingredient_kg_per_order"],
