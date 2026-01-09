@@ -3,6 +3,9 @@ class Ledger:
         self.revenue = 0.0
         self.expenses = 0.0
 
+        self.ingredients_used = 0.0
+        self.energy_used = 0.0
+
     def add_revenue(self, value: float):
         self.revenue += value
 
