@@ -1,40 +1,22 @@
 import json
-from domain.pizzeria import Pizzeria
-from core.clock import Clock
-from core.config_loader import ConfigLoader
-from domain.product import DoughBatch
 
 def save_state(pizzeria):
     state = {
-        "time": pizzeria.clock.now(),
-        "ingredients": pizzeria.inventory.ingredients,
-        "dough_batches": [
-            {"amount": b.amount_kg, "prepared": b.prepared_at_min, "expires": b.expires_at_min}
-            for b in pizzeria.inventory.dough_batches
-        ],
-        "finance": {
-            "revenue": pizzeria.finance.revenue,
-            "expenses": pizzeria.finance.expenses,
-            "losses": pizzeria.finance.losses
-        }
+        "inventory": pizzeria.inventory.ingredients,
+        "finance": pizzeria.finance,
+        "last_time": pizzeria.clock.now()
     }
     with open("state.json", "w") as f:
-        json.dump(state, f, indent=2)
+        json.dump(state, f)
 
-def load_state(loader: ConfigLoader):
+def load_state(loader):
     try:
         with open("state.json", "r") as f:
             data = json.load(f)
         pizzeria = Pizzeria(loader)
-        pizzeria.clock = Clock(data["time"])
-        pizzeria.inventory.ingredients = data["ingredients"]
-        pizzeria.inventory.dough_batches = [
-            DoughBatch(b["amount"], b["prepared"], b["expires"])
-            for b in data["dough_batches"]
-        ]
-        pizzeria.finance.revenue = data["finance"]["revenue"]
-        pizzeria.finance.expenses = data["finance"]["expenses"]
-        pizzeria.finance.losses = data["finance"]["losses"]
+        pizzeria.inventory.ingredients = data["inventory"]
+        pizzeria.finance = data["finance"]
+        pizzeria.clock = Clock(data["last_time"])
         return pizzeria
     except FileNotFoundError:
         return None
