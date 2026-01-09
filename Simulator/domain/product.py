@@ -1,15 +1,13 @@
-from dataclasses import dataclass
+# domain/product.py
 
-@dataclass
 class DoughBatch:
-    amount_kg: float
-    prepared_at_min: int
-    expires_at_min: int
+    """
+    Партия теста
+    """
+    def __init__(self, amount_kg: float, prepared_at_min: int, expires_at_min: int):
+        self.amount_kg = amount_kg
+        self.prepared_at_min = prepared_at_min
+        self.expires_at_min = expires_at_min
 
-    def is_expired(self, now: int) -> bool:
-        return now >= self.expires_at_min
-
-    def consume(self, amount: float):
-        if amount > self.amount_kg:
-            raise ValueError("Недостаточно теста в партии")
-        self.amount_kg -= amount
+    def is_expired(self, now_minute: int) -> bool:
+        return now_minute >= self.expires_at_min
