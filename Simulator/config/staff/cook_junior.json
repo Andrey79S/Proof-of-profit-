@@ -1,7 +1,0 @@
-{
-  "role": "cook",
-  "name": "cook_junior",
-  "assembly_speed_multiplier": 1.0,
-  "can_work_with": ["table_fridge"],
-  "salary_per_hour": 5.0
-}
