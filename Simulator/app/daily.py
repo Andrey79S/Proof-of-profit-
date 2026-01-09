@@ -1,8 +1,10 @@
-from engine.production import ProductionEngine
+# app/daily.py
+
+from engine.production import cook_pizza
 from domain.order import Order
 
 def run_daily(pizzeria):
-    for _ in range(5):
+    print("Рабочий день начался")
+    for _ in range(5):  # 5 пицц в день (пример)
         order = Order("margarita", pizzeria.clock.now())
-        pizzeria.production_engine.cook(order.recipe)
-        pizzeria.clock.tick(15)
+        cook_pizza(pizzeria, order)
