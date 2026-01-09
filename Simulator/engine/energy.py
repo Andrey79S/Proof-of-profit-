@@ -1,6 +1,9 @@
-def calculate_daily_energy(pizzeria):
-    power = sum(eq.power_kw for eq in pizzeria.equipment)
-    daily_kwh = power * 24
-    cost = daily_kwh * pizzeria.config["economy"]["electricity_price_per_kwh"]
-    pizzeria.finance["expenses"] += cost
-    print(f"Ежедневные расходы на энергию: {cost:.2f}")
+# engine/energy.py
+
+def calculate_energy(pizzeria, minutes: int):
+    # Пример: холодильники 0.5 кВт круглосуточно
+    power = 0.5  # кВт
+    kwh = power * (minutes / 60)
+    cost = kwh * pizzeria.config["economy"]["electricity_price_per_kwh"]
+    pizzeria.finance.add_expense(cost)
+    pizzeria.clock.tick(minutes)
