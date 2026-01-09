@@ -1,23 +1,22 @@
+# core/clock.py
+
 class Clock:
-    def __init__(self, initial_minutes: int = 0):
-        self.current_minutes = initial_minutes
+    """
+    Симуляционные часы.
+    Истина времени для всей системы.
+    """
+
+    def __init__(self, start_minute: int = 0):
+        self._minute = start_minute
 
     def now(self) -> int:
-        return self.current_minutes
+        """Текущее симуляционное время в минутах"""
+        return self._minute
 
-    def tick(self, minutes: int):
+    def tick(self, minutes: int) -> None:
+        """
+        Продвигает время вперёд.
+        """
         if minutes < 0:
-            raise ValueError("Нельзя двигать время назад")
-        self.current_minutes += minutes
-
-    def get_day(self) -> int:
-        return self.current_minutes // (24 * 60)
-
-    def get_hour(self) -> int:
-        return (self.current_minutes % (24 * 60)) // 60
-
-    def __str__(self):
-        d = self.get_day() + 1
-        h = self.get_hour()
-        m = self.current_minutes % 60
-        return f"День {d}, {h:02d}:{m:02d}"
+            raise ValueError("Clock cannot go backwards")
+        self._minute += minutes
