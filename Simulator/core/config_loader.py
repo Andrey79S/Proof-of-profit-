@@ -1,13 +1,26 @@
+# core/config_loader.py
+
 import json
-from pathlib import Path
+import os
 
 class ConfigLoader:
-    def __init__(self, base_path: str = "config"):
-        self.base_path = Path(base_path)
+    """
+    Загружает все JSON-конфиги из папки
+    """
+    def __init__(self, config_path="config"):
+        self.config_path = config_path
 
-    def load(self, filename: str) -> dict:
-        path = self.base_path / filename
-        if not path.exists():
-            raise FileNotFoundError(f"Конфиг не найден: {path}")
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
+    def load_all(self) -> dict:
+        configs = {}
+        # Перечисляем нужные файлы
+        filenames = ["economy.json", "recipes.json", "equipment.json", "staff.json"]
+        for fname in filenames:
+            path = os.path.join(self.config_path, fname)
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    key = fname.split(".")[0]  # 'economy', 'recipes', etc.
+                    configs[key] = json.load(f)
+            except FileNotFoundError:
+                print(f"⚠️ Файл {fname} не найден, пропускаем")
+                configs[fname.split(".")[0]] = {}
+        return configs
