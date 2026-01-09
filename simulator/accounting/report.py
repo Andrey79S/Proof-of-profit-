@@ -1,6 +1,7 @@
-def generate_report(ledger):
+def generate_report(pizzeria):
     return {
-        "revenue": ledger.revenue,
-        "expenses": ledger.expenses,
-        "profit": ledger.profit,
+        "reserve_left": pizzeria.reserve.current,
+        "revenue": pizzeria.ledger.revenue,
+        "expenses": pizzeria.ledger.expenses,
+        "profit": pizzeria.ledger.profit,
     }
