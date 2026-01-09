@@ -1,10 +1,13 @@
 from economy.formulas import calculate_economics
 
-def simulate_tick(pizzeria, order_pool, config, hours: float):
-    capacity = pizzeria.capacity(hours)
-    orders_done = order_pool.take(capacity)
+def simulate_time(pizzeria, config, hours: float):
+    max_possible = pizzeria.production_capacity(hours)
+    executed = pizzeria.reserve.consume(max_possible)
 
-    revenue, expenses = calculate_economics(orders_done, config)
+    if executed <= 0:
+        return
+
+    revenue, expenses = calculate_economics(executed, config)
 
     pizzeria.ledger.add_revenue(revenue)
     pizzeria.ledger.add_expense(expenses)
