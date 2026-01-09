@@ -1,15 +1,9 @@
-from dataclasses import dataclass
+#engine/production.py
 
-@dataclass
-class DoughBatch:
-    amount_kg: float
-    prepared_at_min: int
-    expires_at_min: int
+from domain.order import Order
 
-    def is_expired(self, now: int) -> bool:
-        return now >= self.expires_at_min
-
-    def consume(self, amount: float):
-        if amount > self.amount_kg:
-            raise ValueError("Недостаточно теста в партии")
-        self.amount_kg -= amount
+def cook_pizza(pizzeria, order: Order):
+if pizzeria.can_accept_order(order):
+pizzeria.cook(order)
+print(f"Приготовлена пицца: {order.recipe}")
+else:
