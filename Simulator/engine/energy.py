@@ -1,9 +1,24 @@
 # engine/energy.py
 
-def calculate_energy(pizzeria, minutes: int):
-    # Пример: холодильники 0.5 кВт круглосуточно
-    power = 0.5  # кВт
-    kwh = power * (minutes / 60)
-    cost = kwh * pizzeria.config["economy"]["electricity_price_per_kwh"]
-    pizzeria.finance.add_expense(cost)
-    pizzeria.clock.tick(minutes)
+class EnergyEngine:
+    """
+    Подсчёт энергопотребления пиццерии
+    """
+    def __init__(self, pizzeria):
+        self.pizzeria = pizzeria
+
+    def daily_fridge_consumption(self):
+        """
+        Круглосуточная работа холодильников
+        """
+        fridge_power = sum(
+            eq.power_kw for eq in self.pizzeria.equipment.values()
+            if eq.type in ["fridge", "proofing_fridge", "table_fridge"]
+        )
+        daily_kwh = fridge_power * 24
+        daily_cost = daily_kwh * self.pizzeria.economy.get("electricity_price_per_kwh", 0.12)
+
+        self.pizzeria.energy_consumed += daily_kwh
+        self.pizzeria.expenses += daily_cost
+
+        return daily_kwh, daily_cost
