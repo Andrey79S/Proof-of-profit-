@@ -1,7 +1,0 @@
-{
-  "type": "proofing_fridge",
-  "name": "proofing_fridge_basic",
-  "capacity_kg": 40,
-  "power_kw": 0.4,
-  "dough_lifetime_min": 1440
-}

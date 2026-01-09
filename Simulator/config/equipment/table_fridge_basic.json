@@ -1,7 +1,0 @@
-{
-  "type": "table_fridge",
-  "name": "table_fridge_basic",
-  "capacity_kg": 15,
-  "power_kw": 0.3,
-  "opened_ingredient_lifetime_min": 480
-}

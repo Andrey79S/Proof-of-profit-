@@ -1,8 +1,0 @@
-{
-  "type": "mixer",
-  "name": "mixer_basic",
-  "min_batch_kg": 5,
-  "max_batch_kg": 20,
-  "mix_time_min": 15,
-  "power_kw": 2.0
-}
