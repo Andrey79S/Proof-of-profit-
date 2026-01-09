@@ -1,7 +1,8 @@
 class Pizzeria:
-    def __init__(self, capacity_per_hour: int, ledger):
+    def __init__(self, capacity_per_hour: int, reserve, ledger):
         self.capacity_per_hour = capacity_per_hour
+        self.reserve = reserve
         self.ledger = ledger
 
-    def capacity(self, hours: float) -> int:
+    def production_capacity(self, hours: float) -> int:
         return int(self.capacity_per_hour * hours)
