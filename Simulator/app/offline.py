@@ -1,5 +1,13 @@
+# app/offline.py
+
+from engine.spoilage import apply_spoilage
+from engine.energy import calculate_energy
+
 def apply_offline(pizzeria):
-    print("Оффлайн-процессы...")
-    # Порча, энергия холодильников
-    engine.spoilage.apply_spoilage(pizzeria, pizzeria.clock.now())
-    engine.energy.calculate_daily_energy(pizzeria)
+    now = pizzeria.clock.now()
+    # Пример: 12 часов оффлайн
+    delta = 12 * 60
+    calculate_energy(pizzeria, delta)
+    apply_spoilage(pizzeria, now + delta)
+    pizzeria.clock.tick(delta)
+    print("Оффлайн-процессы применены (12 часов)")
