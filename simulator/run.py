@@ -4,12 +4,12 @@ from domain.order_reserve import OrderReserve
 from domain.pizzeria import Pizzeria
 from accounting.ledger import Ledger
 from accounting.report import generate_report
-from simulation.engine import simulate_time
+from simulation.engine import simulate_production
 
-# создаём рынок
+# ======== Создаём рынок ========
 order_pool = OrderPool(initial_orders=1000)
 
-# создаём игрока
+# ======== Создаём игрока ========
 reserve = OrderReserve(base_capacity=CONFIG["max_reserve"])
 ledger = Ledger()
 pizzeria = Pizzeria(
@@ -17,20 +17,19 @@ pizzeria = Pizzeria(
     reserve=reserve,
     ledger=ledger
 )
+pizzeria.day = 12  # для отчёта
 
-# игрок тапает
+# ======== Игрок тапает (добавляет заказы в пул) ========
 taps = 20
 taken_from_pool = order_pool.take(taps * pizzeria.tap_power())
 reserve.add(taken_from_pool, pizzeria)
 
-# конвертируем заказы в пиццы
-pizza_orders = pizzeria.menu.convert_orders_to_pizzas(reserve.current)
-print("Pizza orders to produce:", pizza_orders)
+# ======== Конвертация заказов в пиццы и производство ========
+simulate_production(pizzeria, hours=24)  # имитируем 1 день
 
-# игрок оффлайн 3 дня
-simulate_time(pizzeria, CONFIG, hours=24*3)
-
-# отчёт
+# ======== Генерация отчёта ========
 report = generate_report(pizzeria)
 print(report)
-print("Orders left in pool:", order_pool.orders)
+
+# ======== Остаток заказов в пуле ========
+print("\nOrders left in pool:", order_pool.orders)
