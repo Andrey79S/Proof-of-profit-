@@ -1,15 +1,17 @@
-from economy.formulas import calculate_economics
+from economy.formulas import calculate_economics_by_pizza
 
-def simulate_time(pizzeria, config, hours: float):
-    max_possible = pizzeria.production_capacity(hours)
-    executed = pizzeria.reserve.consume(max_possible)
-
-    if executed <= 0:
+def simulate_production(pizzeria, hours: float):
+    # сколько можем произвести
+    capacity = pizzeria.production_capacity(hours)
+    produced_orders = pizzeria.reserve.consume(capacity)
+    if produced_orders <= 0:
         return
 
-    revenue, expenses, flows = calculate_economics(executed, pizzeria, config)
+    # конвертируем в пиццы
+    pizza_orders = pizzeria.menu.convert_orders_to_pizzas(produced_orders)
 
-    pizzeria.ledger.add_revenue(revenue)
-    pizzeria.ledger.add_expense(expenses)
-    pizzeria.ledger.ingredients_used += flows["ingredients_kg"]
-    pizzeria.ledger.energy_used += flows["energy_kwh"]
+    # экономические расчёты
+    econ_data = calculate_economics_by_pizza(pizza_orders, pizzeria.menu, pizzeria)
+
+    # сохраняем в ledger
+    pizzeria.ledger.add(econ_data)
