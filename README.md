@@ -1,51 +1,186 @@
-# Proof-of-Profit Protocol
+Proof-of-Profit Protocol (PoP)
 
-Proof of Profit (PoP) is a protocol for the transparent and verifiable representation of real-world business economics on the blockchain.
-
-PoP establishes a standardized approach for collecting, verifying, and governing real economic data on-chain.
+Verifiable business revenue infrastructure using POS data, Z-reports and cryptographic proofs on-chain.
 
 ---
 
-## Why It Matters
+Overview
 
-Modern businesses often operate with opaque economic models, where data is difficult to verify and compare.
+Proof-of-Profit (PoP) is a protocol that makes real-world business revenue verifiable without exposing sensitive data.
 
-PoP addresses this problem by providing a transparent, verifiable data layer that reflects real economic activity.
-
----
-
-## Core Principles
-
-### Protocol at the Core
-PoP is an open protocol, not a standalone business. Any business can become a PoP node.
-
-### Transparent Economics
-The protocol enables transparent representation of costs and revenues based on real accounting data.
-
-### Verification Over Trust
-PoP relies on objective data verification rather than trust in self-reported statements.
-
-### DAO Governance
-Protocol governance is carried out through a DAO, where participants make decisions based on verified data.
- 
- ---
-
-## First Use Case: Pizza 🍕
-Pizza was chosen as the first PoP-native use case because it is:
-- **widely recognized and consumed worldwide** — making it easy to understand and relate to;
-- **economically simple** — ingredients, labor, rent, and utilities are straightforward to document and verify;
-- **historically relevant** — pizza was the first real-world product purchased with cryptocurrency, symbolizing the connection between physical commerce and crypto.
-
-### No Profit Promises
-PoP does not guarantee income, dividends, or returns. All decisions regarding the use of economic data are made at the DAO level.
+It connects off-chain financial data (POS systems, fiscal Z-reports, banking signals) with on-chain verification, enabling a new class of transparent, data-backed financial primitives.
 
 ---
 
-## Current Stage
+Problem
 
-The project is currently in the pre-PoP / pre-funding stage:
-- Architecture and methodology are under development
-- No live PoP nodes or funding
-- No production smart contracts
+Small and medium-sized businesses operate as black boxes:
 
-This repository is focused on **concept validation and architectural design**.
+- Financial reports are not verifiable
+- Investors rely on trust, not proof
+- Revenue can be misreported or manipulated
+- Access to capital is limited due to lack of transparency
+
+Even in modern fintech systems, there is no standard way to cryptographically verify real business income.
+
+---
+
+Solution
+
+PoP introduces a multi-layer verification model:
+
+1. Data Sources
+   
+   - POS systems
+   - Fiscal Z-reports (RRO/PRRO)
+   - Banking/payment data
+
+2. Verification Layer
+   
+   - Cross-source validation (consistency checks)
+   - Hash-linked reporting (tamper resistance)
+   - Signed data inputs (when available)
+
+3. Proof Layer
+   
+   - Aggregated revenue statements
+   - Merkle-based commitments
+   - Optional Zero-Knowledge proofs for privacy
+
+4. On-chain Layer
+   
+   - Proofs verified and stored on-chain
+   - Public access to verified metrics (without raw data exposure)
+
+---
+
+Core Concept
+
+Proof of Revenue → Proof of Profit
+
+PoP is built in two stages:
+
+- Proof of Revenue
+  Verifiable, tamper-resistant revenue based on Z-reports and cross-validated data
+
+- Proof of Profit (future layer)
+  Profit derived from:
+  
+  - verified revenue
+  - partially verifiable expenses
+  - transparent calculation models
+
+---
+
+Trust Model
+
+PoP does not assume a single trusted source.
+
+Instead, it relies on:
+
+- Multiple independent data streams
+- Cross-validation between sources
+- Detection of inconsistencies and anomalies
+
+The system guarantees:
+
+- Data cannot be altered retroactively without detection
+- Large discrepancies between sources are detectable
+- Trust is minimized and made auditable
+
+«“Proof of profit” — it is trust-minimized and verifiable»
+
+---
+
+Architecture
+
+PoP is structured into three layers:
+
+1. Data Layer
+   POS systems, Z-reports, banking/payment signals
+
+2. Verification Layer
+   Hash chains, signatures, cross-source consistency
+
+3. Proof Layer
+   Aggregated statements, Merkle commitments, Zero-Knowledge proofs
+
+See: "ARCHITECTURE.md" for details.
+
+---
+
+Why Zero-Knowledge
+
+Zero-knowledge proofs enable:
+
+- Verification of revenue without exposing transactions
+- Protection of sensitive business data
+- Trustless validation of financial aggregates
+
+ZK is used as an optional privacy layer, not as a dependency for MVP.
+
+---
+
+Use Cases
+
+- Small and medium businesses (retail, food, services)
+- Revenue-backed financing
+- Transparent reporting for partners and investors
+- On-chain financial primitives based on real-world data
+
+---
+
+Roadmap
+
+Stage 1 — Proof of Revenue (MVP)
+
+- Z-report ingestion and normalization
+- Hash-based integrity layer
+- Cross-source validation
+- On-chain publication of aggregated revenue
+
+Stage 2 — Verifiable Data Layer
+
+- Merkle-based proofs
+- Selective disclosure
+- Basic anomaly detection
+
+Stage 3 — Privacy Layer
+
+- Zero-Knowledge proofs for aggregated metrics
+- Private revenue verification
+
+---
+
+Current Status
+
+- Concept and architecture defined
+- Repository being restructured for protocol-level development
+- Preparing MVP for hackathon and grant submissions
+
+---
+
+Contributing
+
+We are looking for:
+
+- ZK developers (Circom / Halo2 / similar)
+- Blockchain developers (Solana / Rust / Anchor)
+- Backend / data engineers
+- POS / fintech integration specialists
+
+For collaboration: see "CONTRIBUTING.md"
+
+---
+
+Vision
+
+PoP aims to become:
+
+«A standard layer for verifiable real-world economic data in Web3»
+
+---
+
+License
+
+MIT
