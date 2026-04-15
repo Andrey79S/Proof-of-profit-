@@ -88,7 +88,7 @@ The system guarantees:
 - Large discrepancies between sources are detectable
 - Trust is minimized and made auditable
 
-«“Proof of profit” — it is trust-minimized and verifiable»
+“Proof-of-Profit is a trust-minimized and verifiable financial data layer.”
 
 ---
 
