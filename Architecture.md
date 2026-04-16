@@ -76,7 +76,7 @@ Commitments
 
 Data is structured into verifiable forms such as Merkle commitments.
 
-Zero-Knowledge Proofs (optional)
+Zero-Knowledge Proofs
 
 ZK proofs can be generated to:
 
